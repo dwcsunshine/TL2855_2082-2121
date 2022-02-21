@@ -1,0 +1,8 @@
+{
+  "files.associations": {
+    "hal_data.h": "c",
+    "hal_entry.h": "c",
+    "lv_test_theme_1.h": "c",
+    "lv_test_theme_2.h": "c"
+  }
+}

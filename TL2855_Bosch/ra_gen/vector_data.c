@@ -18,10 +18,10 @@
             [11] = sci_uart_txi_isr, /* SCI1 TXI (Transmit data empty) */
             [12] = sci_uart_tei_isr, /* SCI1 TEI (Transmit end) */
             [13] = sci_uart_eri_isr, /* SCI1 ERI (Receive error) */
-            [14] = sci_uart_rxi_isr, /* SCI7 RXI (Received data full) */
-            [15] = sci_uart_txi_isr, /* SCI7 TXI (Transmit data empty) */
-            [16] = sci_uart_tei_isr, /* SCI7 TEI (Transmit end) */
-            [17] = sci_uart_eri_isr, /* SCI7 ERI (Receive error) */
+            [14] = sci_uart_rxi_isr, /* SCI2 RXI (Received data full) */
+            [15] = sci_uart_txi_isr, /* SCI2 TXI (Transmit data empty) */
+            [16] = sci_uart_tei_isr, /* SCI2 TEI (Transmit end) */
+            [17] = sci_uart_eri_isr, /* SCI2 ERI (Receive error) */
             [18] = fcu_frdyi_isr, /* FCU FRDYI (Flash ready interrupt) */
             [19] = fcu_fiferr_isr, /* FCU FIFERR (Flash access error interrupt) */
         };
@@ -41,10 +41,10 @@
             [11] = BSP_PRV_IELS_ENUM(EVENT_SCI1_TXI), /* SCI1 TXI (Transmit data empty) */
             [12] = BSP_PRV_IELS_ENUM(EVENT_SCI1_TEI), /* SCI1 TEI (Transmit end) */
             [13] = BSP_PRV_IELS_ENUM(EVENT_SCI1_ERI), /* SCI1 ERI (Receive error) */
-            [14] = BSP_PRV_IELS_ENUM(EVENT_SCI7_RXI), /* SCI7 RXI (Received data full) */
-            [15] = BSP_PRV_IELS_ENUM(EVENT_SCI7_TXI), /* SCI7 TXI (Transmit data empty) */
-            [16] = BSP_PRV_IELS_ENUM(EVENT_SCI7_TEI), /* SCI7 TEI (Transmit end) */
-            [17] = BSP_PRV_IELS_ENUM(EVENT_SCI7_ERI), /* SCI7 ERI (Receive error) */
+            [14] = BSP_PRV_IELS_ENUM(EVENT_SCI2_RXI), /* SCI2 RXI (Received data full) */
+            [15] = BSP_PRV_IELS_ENUM(EVENT_SCI2_TXI), /* SCI2 TXI (Transmit data empty) */
+            [16] = BSP_PRV_IELS_ENUM(EVENT_SCI2_TEI), /* SCI2 TEI (Transmit end) */
+            [17] = BSP_PRV_IELS_ENUM(EVENT_SCI2_ERI), /* SCI2 ERI (Receive error) */
             [18] = BSP_PRV_IELS_ENUM(EVENT_FCU_FRDYI), /* FCU FRDYI (Flash ready interrupt) */
             [19] = BSP_PRV_IELS_ENUM(EVENT_FCU_FIFERR), /* FCU FIFERR (Flash access error interrupt) */
         };

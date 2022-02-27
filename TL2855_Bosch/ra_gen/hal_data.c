@@ -27,9 +27,9 @@ const flash_instance_t g_flash0 =
     .p_cfg         = &g_flash0_cfg,
     .p_api         = &g_flash_on_flash_hp
 };
-gpt_instance_ctrl_t g_Buzz_pwm_ctrl;
+gpt_instance_ctrl_t g_motor_pwm_ctrl;
 #if 0
-const gpt_extended_pwm_cfg_t g_Buzz_pwm_pwm_extend =
+const gpt_extended_pwm_cfg_t g_motor_pwm_pwm_extend =
 {
     .trough_ipl          = (BSP_IRQ_DISABLED),
 #if defined(VECTOR_NUMBER_GPT4_COUNTER_UNDERFLOW)
@@ -51,13 +51,13 @@ const gpt_extended_pwm_cfg_t g_Buzz_pwm_pwm_extend =
     .gtiocb_disable_setting = GPT_GTIOC_DISABLE_PROHIBITED,
 };
 #endif
-const gpt_extended_cfg_t g_Buzz_pwm_extend =
+const gpt_extended_cfg_t g_motor_pwm_extend =
 {
-    .gtioca = { .output_enabled = false,
+    .gtioca = { .output_enabled = true,
                 .stop_level     = GPT_PIN_LEVEL_LOW
               },
-    .gtiocb = { .output_enabled = true,
-                .stop_level     = GPT_PIN_LEVEL_LOW
+    .gtiocb = { .output_enabled = false,
+                .stop_level     = GPT_PIN_LEVEL_HIGH
               },
     .start_source        = (gpt_source_t) ( GPT_SOURCE_NONE),
     .stop_source         = (gpt_source_t) ( GPT_SOURCE_NONE),
@@ -81,87 +81,6 @@ const gpt_extended_cfg_t g_Buzz_pwm_extend =
     .capture_filter_gtioca       = GPT_CAPTURE_FILTER_NONE,
     .capture_filter_gtiocb       = GPT_CAPTURE_FILTER_NONE,
 #if 0
-    .p_pwm_cfg                   = &g_Buzz_pwm_pwm_extend,
-#else
-    .p_pwm_cfg                   = NULL,
-#endif
-};
-const timer_cfg_t g_Buzz_pwm_cfg =
-{
-    .mode                = TIMER_MODE_PWM,
-    /* Actual period: 0.00025 seconds. Actual duty: 50%. */ .period_counts = (uint32_t) 0x61a8, .duty_cycle_counts = 0x30d4, .source_div = (timer_source_div_t)0,
-    .channel             = 4,
-    .p_callback          = NULL,
-    .p_context           = NULL,
-    .p_extend            = &g_Buzz_pwm_extend,
-    .cycle_end_ipl       = (BSP_IRQ_DISABLED),
-#if defined(VECTOR_NUMBER_GPT4_COUNTER_OVERFLOW)
-    .cycle_end_irq       = VECTOR_NUMBER_GPT4_COUNTER_OVERFLOW,
-#else
-    .cycle_end_irq       = FSP_INVALID_VECTOR,
-#endif
-};
-/* Instance structure to use this module. */
-const timer_instance_t g_Buzz_pwm =
-{
-    .p_ctrl        = &g_Buzz_pwm_ctrl,
-    .p_cfg         = &g_Buzz_pwm_cfg,
-    .p_api         = &g_timer_on_gpt
-};
-gpt_instance_ctrl_t g_motor_pwm_ctrl;
-#if 0
-const gpt_extended_pwm_cfg_t g_motor_pwm_pwm_extend =
-{
-    .trough_ipl          = (BSP_IRQ_DISABLED),
-#if defined(VECTOR_NUMBER_GPT7_COUNTER_UNDERFLOW)
-    .trough_irq          = VECTOR_NUMBER_GPT7_COUNTER_UNDERFLOW,
-#else
-    .trough_irq          = FSP_INVALID_VECTOR,
-#endif
-    .poeg_link           = GPT_POEG_LINK_POEG0,
-    .output_disable      =  GPT_OUTPUT_DISABLE_NONE,
-    .adc_trigger         =  GPT_ADC_TRIGGER_NONE,
-    .dead_time_count_up  = 0,
-    .dead_time_count_down = 0,
-    .adc_a_compare_match = 0,
-    .adc_b_compare_match = 0,
-    .interrupt_skip_source = GPT_INTERRUPT_SKIP_SOURCE_NONE,
-    .interrupt_skip_count  = GPT_INTERRUPT_SKIP_COUNT_0,
-    .interrupt_skip_adc    = GPT_INTERRUPT_SKIP_ADC_NONE,
-    .gtioca_disable_setting = GPT_GTIOC_DISABLE_PROHIBITED,
-    .gtiocb_disable_setting = GPT_GTIOC_DISABLE_PROHIBITED,
-};
-#endif
-const gpt_extended_cfg_t g_motor_pwm_extend =
-{
-    .gtioca = { .output_enabled = false,
-                .stop_level     = GPT_PIN_LEVEL_LOW
-              },
-    .gtiocb = { .output_enabled = true,
-                .stop_level     = GPT_PIN_LEVEL_HIGH
-              },
-    .start_source        = (gpt_source_t) ( GPT_SOURCE_NONE),
-    .stop_source         = (gpt_source_t) ( GPT_SOURCE_NONE),
-    .clear_source        = (gpt_source_t) ( GPT_SOURCE_NONE),
-    .count_up_source     = (gpt_source_t) ( GPT_SOURCE_NONE),
-    .count_down_source   = (gpt_source_t) ( GPT_SOURCE_NONE),
-    .capture_a_source    = (gpt_source_t) ( GPT_SOURCE_NONE),
-    .capture_b_source    = (gpt_source_t) ( GPT_SOURCE_NONE),
-    .capture_a_ipl       = (BSP_IRQ_DISABLED),
-    .capture_b_ipl       = (BSP_IRQ_DISABLED),
-#if defined(VECTOR_NUMBER_GPT7_CAPTURE_COMPARE_A)
-    .capture_a_irq       = VECTOR_NUMBER_GPT7_CAPTURE_COMPARE_A,
-#else
-    .capture_a_irq       = FSP_INVALID_VECTOR,
-#endif
-#if defined(VECTOR_NUMBER_GPT7_CAPTURE_COMPARE_B)
-    .capture_b_irq       = VECTOR_NUMBER_GPT7_CAPTURE_COMPARE_B,
-#else
-    .capture_b_irq       = FSP_INVALID_VECTOR,
-#endif
-    .capture_filter_gtioca       = GPT_CAPTURE_FILTER_NONE,
-    .capture_filter_gtiocb       = GPT_CAPTURE_FILTER_NONE,
-#if 0
     .p_pwm_cfg                   = &g_motor_pwm_pwm_extend,
 #else
     .p_pwm_cfg                   = NULL,
@@ -171,13 +90,13 @@ const timer_cfg_t g_motor_pwm_cfg =
 {
     .mode                = TIMER_MODE_PWM,
     /* Actual period: 0.001 seconds. Actual duty: 50%. */ .period_counts = (uint32_t) 0x61a8, .duty_cycle_counts = 0x30d4, .source_div = (timer_source_div_t)2,
-    .channel             = 7,
+    .channel             = 4,
     .p_callback          = NULL,
     .p_context           = NULL,
     .p_extend            = &g_motor_pwm_extend,
     .cycle_end_ipl       = (BSP_IRQ_DISABLED),
-#if defined(VECTOR_NUMBER_GPT7_COUNTER_OVERFLOW)
-    .cycle_end_irq       = VECTOR_NUMBER_GPT7_COUNTER_OVERFLOW,
+#if defined(VECTOR_NUMBER_GPT4_COUNTER_OVERFLOW)
+    .cycle_end_irq       = VECTOR_NUMBER_GPT4_COUNTER_OVERFLOW,
 #else
     .cycle_end_irq       = FSP_INVALID_VECTOR,
 #endif
@@ -189,21 +108,21 @@ const timer_instance_t g_motor_pwm =
     .p_cfg         = &g_motor_pwm_cfg,
     .p_api         = &g_timer_on_gpt
 };
-sci_uart_instance_ctrl_t     g_uart7_board_ctrl;
+sci_uart_instance_ctrl_t     g_uart_sensor_ctrl;
 
-            baud_setting_t               g_uart7_board_baud_setting =
+            baud_setting_t               g_uart_sensor_baud_setting =
             {
                 /* Baud rate calculated with 0.469% error. */ .abcse = 0, .abcs = 0, .bgdm = 1, .cks = 1, .brr = 161, .mddr = (uint8_t) 256, .brme = false
             };
 
             /** UART extended configuration for UARTonSCI HAL driver */
-            const sci_uart_extended_cfg_t g_uart7_board_cfg_extend =
+            const sci_uart_extended_cfg_t g_uart_sensor_cfg_extend =
             {
                 .clock                = SCI_UART_CLOCK_INT,
                 .rx_edge_start          = SCI_UART_START_BIT_FALLING_EDGE,
                 .noise_cancel         = SCI_UART_NOISE_CANCELLATION_DISABLE,
                 .rx_fifo_trigger        = SCI_UART_RX_FIFO_TRIGGER_MAX,
-                .p_baud_setting         = &g_uart7_board_baud_setting,
+                .p_baud_setting         = &g_uart_sensor_baud_setting,
                 .uart_mode              = UART_MODE_RS232,
                 .ctsrts_en              = SCI_UART_CTSRTS_RTS_OUTPUT,
 #if 0
@@ -214,15 +133,15 @@ sci_uart_instance_ctrl_t     g_uart7_board_ctrl;
             };
 
             /** UART interface configuration */
-            const uart_cfg_t g_uart7_board_cfg =
+            const uart_cfg_t g_uart_sensor_cfg =
             {
-                .channel             = 7,
+                .channel             = 2,
                 .data_bits           = UART_DATA_BITS_8,
                 .parity              = UART_PARITY_OFF,
                 .stop_bits           = UART_STOP_BITS_1,
-                .p_callback          = uart7_board_callback,
+                .p_callback          = uart_sensor_callback,
                 .p_context           = NULL,
-                .p_extend            = &g_uart7_board_cfg_extend,
+                .p_extend            = &g_uart_sensor_cfg_extend,
 #define RA_NOT_DEFINED (1)
 #if (RA_NOT_DEFINED == RA_NOT_DEFINED)
                 .p_transfer_tx       = NULL,
@@ -239,33 +158,33 @@ sci_uart_instance_ctrl_t     g_uart7_board_ctrl;
                 .txi_ipl             = (12),
                 .tei_ipl             = (12),
                 .eri_ipl             = (12),
-#if defined(VECTOR_NUMBER_SCI7_RXI)
-                .rxi_irq             = VECTOR_NUMBER_SCI7_RXI,
+#if defined(VECTOR_NUMBER_SCI2_RXI)
+                .rxi_irq             = VECTOR_NUMBER_SCI2_RXI,
 #else
                 .rxi_irq             = FSP_INVALID_VECTOR,
 #endif
-#if defined(VECTOR_NUMBER_SCI7_TXI)
-                .txi_irq             = VECTOR_NUMBER_SCI7_TXI,
+#if defined(VECTOR_NUMBER_SCI2_TXI)
+                .txi_irq             = VECTOR_NUMBER_SCI2_TXI,
 #else
                 .txi_irq             = FSP_INVALID_VECTOR,
 #endif
-#if defined(VECTOR_NUMBER_SCI7_TEI)
-                .tei_irq             = VECTOR_NUMBER_SCI7_TEI,
+#if defined(VECTOR_NUMBER_SCI2_TEI)
+                .tei_irq             = VECTOR_NUMBER_SCI2_TEI,
 #else
                 .tei_irq             = FSP_INVALID_VECTOR,
 #endif
-#if defined(VECTOR_NUMBER_SCI7_ERI)
-                .eri_irq             = VECTOR_NUMBER_SCI7_ERI,
+#if defined(VECTOR_NUMBER_SCI2_ERI)
+                .eri_irq             = VECTOR_NUMBER_SCI2_ERI,
 #else
                 .eri_irq             = FSP_INVALID_VECTOR,
 #endif
             };
 
 /* Instance structure to use this module. */
-const uart_instance_t g_uart7_board =
+const uart_instance_t g_uart_sensor =
 {
-    .p_ctrl        = &g_uart7_board_ctrl,
-    .p_cfg         = &g_uart7_board_cfg,
+    .p_ctrl        = &g_uart_sensor_ctrl,
+    .p_cfg         = &g_uart_sensor_cfg,
     .p_api         = &g_uart_on_sci
 };
 sci_uart_instance_ctrl_t     g_uart1_wifi_ctrl;

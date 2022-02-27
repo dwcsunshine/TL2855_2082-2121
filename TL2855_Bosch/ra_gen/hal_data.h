@@ -16,7 +16,6 @@
 #include "r_transfer_api.h"
 #include "r_spi.h"
 #include "hal_entry.h"
-
 FSP_HEADER
 /* Flash on Flash HP Instance */
 extern const flash_instance_t g_flash0;
@@ -29,16 +28,6 @@ extern const flash_cfg_t g_flash0_cfg;
 void g_flash0_callback(flash_callback_args_t * p_args);
 #endif
 /** Timer on GPT Instance. */
-extern const timer_instance_t g_Buzz_pwm;
-
-/** Access the GPT instance using these structures when calling API functions directly (::p_api is not used). */
-extern gpt_instance_ctrl_t g_Buzz_pwm_ctrl;
-extern const timer_cfg_t g_Buzz_pwm_cfg;
-
-#ifndef NULL
-void NULL(timer_callback_args_t * p_args);
-#endif
-/** Timer on GPT Instance. */
 extern const timer_instance_t g_motor_pwm;
 
 /** Access the GPT instance using these structures when calling API functions directly (::p_api is not used). */
@@ -49,15 +38,15 @@ extern const timer_cfg_t g_motor_pwm_cfg;
 void NULL(timer_callback_args_t * p_args);
 #endif
 /** UART on SCI Instance. */
-            extern const uart_instance_t      g_uart7_board;
+            extern const uart_instance_t      g_uart_sensor;
 
             /** Access the UART instance using these structures when calling API functions directly (::p_api is not used). */
-            extern sci_uart_instance_ctrl_t     g_uart7_board_ctrl;
-            extern const uart_cfg_t g_uart7_board_cfg;
-            extern const sci_uart_extended_cfg_t g_uart7_board_cfg_extend;
+            extern sci_uart_instance_ctrl_t     g_uart_sensor_ctrl;
+            extern const uart_cfg_t g_uart_sensor_cfg;
+            extern const sci_uart_extended_cfg_t g_uart_sensor_cfg_extend;
 
-            #ifndef uart7_board_callback
-            void uart7_board_callback(uart_callback_args_t * p_args);
+            #ifndef uart_sensor_callback
+            void uart_sensor_callback(uart_callback_args_t * p_args);
             #endif
 /** UART on SCI Instance. */
             extern const uart_instance_t      g_uart1_wifi;

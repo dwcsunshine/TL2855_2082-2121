@@ -10,7 +10,6 @@ Sys_str	Sys;  // 系统标志位等等参数
 FG_DEF FG;
 
 
-
 void r_flash_hp_bgo_example(void);
 fsp_err_t r_flash_hp_bgo_2855 ( u8 const blocks,uint32_t const src_address,uint32_t const num_bytes);
 void Turn_On_Animation(void);
@@ -74,9 +73,10 @@ void R_BSP_WarmStart(bsp_warm_start_event_t event);
 FSP_CPP_FOOTER
 
 
-LV_FONT_DECLARE(my_font_icon_55);
+LV_FONT_DECLARE(my_font_icon_B);
 //LV_FONT_DECLARE(my_font_icon_100);
-LV_FONT_DECLARE(my_font_icon_30);
+LV_FONT_DECLARE(my_font_icon_L);
+LV_FONT_DECLARE(my_font_icon_Filter); //滤网复位时候的两个图标
 LV_IMG_DECLARE (bosch);
 LV_IMG_DECLARE (sleep5);
 
@@ -119,9 +119,9 @@ char  table_temp[9]= {0xee,0x98,0x88,'-',0xee,0x98,0x82,0x00};
 char  table_humi[8]= {0xee,0x98,0x87,'-',0xee,0x98,0x84,0x00};
 char  table_pm25[3]= {'0','0','0'};
 char  table_tvoc[3]= {'L','0','0'};
-char  table_filterpercent[15]= {'#','f','f','0','0','0','0',' ',0x31,0x30,0x30,0xee,0x98,0x84,'#'};
+char  table_filterpercent[15]= {'#','5','E','B','D','8','2',' ',0x31,0x30,0x30,0xee,0x98,0x84,'#'};
 char  const table_100percent[4]= {0xee,0x98,0x84,'#'};
-
+char  const table_100percentdispgreen[15]= {'#','5','E','B','D','8','2',' ',0x31,0x30,0x30,0xee,0x98,0x84,'#'}; //5EBD82 绿色
 
 
 u8 tim1ms_flg = 0;
@@ -183,7 +183,7 @@ lv_style_t img_style_sleep;
 
 
 
-const lv_point_t line_points[] = { {159, 65}, {159, 175}};
+const lv_point_t line_points[] = { {159, 65}, {159, 180}};
 //  坐标点的个数
 #define LINE_POINTS_NUM (sizeof(line_points)/sizeof(line_points[0]))
 
@@ -346,7 +346,11 @@ void Task_Pm25valuerefresh(u16 pm25value)
 		table_pm25[2] = 0x30+pm25value%10;
 		lv_label_set_array_text(label_pm25value,(const char*)&table_pm25[0],3);
 	}
-
+	pm25value = 14;
+	table_pm25[0] = 0x30+pm25value/100;
+	table_pm25[1] = 0x30+pm25value%100/10;
+	table_pm25[2] = 0x30+pm25value%10;
+	lv_label_set_array_text(label_pm25value,(const char*)&table_pm25[0],3);
 }
 
 
@@ -386,21 +390,25 @@ void Task_Fanrefresh(espd fanspd)
 		lv_img_set_src (Img_fanstate, &fanspd0);
 		break;
 	}
-	if(Sys.opmode == emodeAuto)
+	if(lv_obj_get_hidden(Img_fanstate)==true)
 	{
+		lv_obj_set_hidden(Img_fanstate, false);
+	}
+	// if(Sys.opmode == emodeAuto)
+	// {
 
-		if(lv_obj_get_hidden(Img_fanstate)==false)
-		{
-			lv_obj_set_hidden(Img_fanstate, true);
-		}
-	}
-	else
-	{
-		if(lv_obj_get_hidden(Img_fanstate)==true)
-		{
-			lv_obj_set_hidden(Img_fanstate, false);
-		}
-	}
+	// 	if(lv_obj_get_hidden(Img_fanstate)==false)
+	// 	{
+	// 		lv_obj_set_hidden(Img_fanstate, true);
+	// 	}
+	// }
+	// else
+	// {
+	// 	if(lv_obj_get_hidden(Img_fanstate)==true)
+	// 	{
+	// 		lv_obj_set_hidden(Img_fanstate, false);
+	// 	}
+	// }
 }
 
 void Task_Humirefresh(u8 Humi)
@@ -509,11 +517,11 @@ void Task_Sensordatacreate(void)
 		lv_label_set_long_mode(label_pm25,LV_LABEL_LONG_EXPAND);
 		lv_obj_set_size(label_pm25,100,30);
 		lv_label_set_style(label_pm25,LV_LABEL_STYLE_MAIN,&src1_style_Mainscreen_Littlestyle);
-		lv_obj_set_pos (label_pm25, 40, 80);
+		lv_obj_set_pos (label_pm25, 35, 70);
 		lv_label_set_text(label_pm25,"PM2.5");
 		if(label_tvoc == NULL)
 			label_tvoc =lv_label_create(scr,label_pm25);
-		lv_obj_set_pos (label_tvoc, 207, 80);
+		lv_obj_set_pos (label_tvoc, 195, 70);
 		lv_label_set_text(label_tvoc,"TVOC");
 		src1_style_Mainscreen_Littlestyle.text.opa = 0;
 
@@ -532,8 +540,8 @@ void Task_Sensordatacreate(void)
 		lv_label_set_array_text(label_pm25value,(const char*)&table_pm25[0],3);
 		lv_label_set_array_text(label_tvocvalue,(const char*)&table_tvoc[0],3);
 
-		lv_obj_align(label_tvocvalue, scr, LV_ALIGN_CENTER, 78, 25);
-		lv_obj_align(label_pm25value, scr, LV_ALIGN_CENTER, -78, 25);
+		lv_obj_align(label_tvocvalue, scr, LV_ALIGN_CENTER, 80, 28);
+		lv_obj_align(label_pm25value, scr, LV_ALIGN_CENTER, -78, 28);
 		lv_obj_set_auto_realign (label_pm25value, true);
 		lv_obj_set_auto_realign (label_tvocvalue, true);
 		if(Sys.Warnup_Cnt<=300)  // 30S预热时间内显示
@@ -563,7 +571,7 @@ void Task_Modecreate(void)
 		lv_label_set_style(label_auto_manual,LV_LABEL_STYLE_MAIN,&src1_style_Mainscreen);
 //		lv_obj_align(label_auto_manual,scr,LV_ALIGN_IN_TOP_LEFT,0,10);
 //		lv_label_set_align(label_auto_manual,LV_ALIGN_IN_TOP_LEFT);
-		lv_obj_set_pos (label_auto_manual,22,15);
+		lv_obj_set_pos (label_auto_manual,15,12);
 		Task_Moderefresh(Sys.opmode);
 		src1_style_Mainscreen.text.opa = 0;
 	}
@@ -580,21 +588,21 @@ void Task_Fancreate(void)
 		lv_img_set_style (Img_fanstate, LV_IMG_STYLE_MAIN,&src1_style_Mainscreen);
 		lv_obj_set_size (Img_fanstate, 40, 40);
 		Task_Fanrefresh (Sys.Speed.gearreal);
-		lv_obj_set_pos (Img_fanstate,58,13);
-		if(Sys.opmode == emodeAuto)
-		{
-			if(lv_obj_get_hidden(Img_fanstate)==false)
-			{
-				lv_obj_set_hidden(Img_fanstate, true);
-			}
-		}
-		else
-		{
-			if(lv_obj_get_hidden(Img_fanstate)==true)
-			{
-				lv_obj_set_hidden(Img_fanstate, false);
-			}
-		}
+		lv_obj_set_pos (Img_fanstate,53,10);
+		// if(Sys.opmode == emodeAuto)
+		// {
+		// 	if(lv_obj_get_hidden(Img_fanstate)==false)
+		// 	{
+		// 		lv_obj_set_hidden(Img_fanstate, true);
+		// 	}
+		// }
+		// else
+		// {
+		// 	if(lv_obj_get_hidden(Img_fanstate)==true)
+		// 	{
+		// 		lv_obj_set_hidden(Img_fanstate, false);
+		// 	}
+		// }
 	}
 }
 
@@ -604,7 +612,7 @@ void Task_Wificreate(void)
 	{
 		label_wifi = lv_label_create(scr,NULL); //创建一个标签
 		lv_img_set_style(label_wifi, LV_IMG_STYLE_MAIN, &src1_style_Mainscreen_Wifi);
-		lv_obj_align(label_wifi,scr,LV_ALIGN_IN_TOP_MID,140,15);
+		lv_obj_align(label_wifi,scr,LV_ALIGN_IN_TOP_MID,140,9);
 		lv_label_set_align(label_wifi,LV_ALIGN_IN_TOP_MID);
 		lv_label_set_text(label_wifi,wifi);
 		src1_style_Mainscreen_Wifi.text.opa =0;
@@ -617,7 +625,7 @@ void Task_Childlockcreate(void)
 	{
 		label_childlock = lv_label_create(scr,NULL); //创建一个标签
 		lv_img_set_style(label_childlock, LV_IMG_STYLE_MAIN, &src1_style_Mainscreen_Lock);
-		lv_obj_align(label_childlock,scr,LV_ALIGN_IN_TOP_MID,100,15);
+		lv_obj_align(label_childlock,scr,LV_ALIGN_IN_TOP_MID,100,12);
 		lv_label_set_align(label_childlock,LV_ALIGN_IN_TOP_MID);
 
 		lv_label_set_text(label_childlock,ChildLock);
@@ -631,14 +639,14 @@ void Task_Timercreate(void)
 	{
 		label_timer = lv_label_create(scr,label_auto_manual); //创建一个标签
 		lv_label_set_long_mode (label_timer, LV_LABEL_LONG_EXPAND); //文字自动填充
-		lv_obj_set_pos(label_timer,135,15);
+		lv_obj_set_pos(label_timer,135,10);
 		lv_label_set_style(label_timer, LV_LABEL_STYLE_MAIN, &src1_style_Mainscreen_Timer);
 		lv_label_set_align (label_timer, LV_LABEL_ALIGN_CENTER);
 
 		lv_label_set_array_text(label_timer,(const char*)&table_timer,5);
-		lv_obj_align(label_timer, scr, LV_ALIGN_IN_TOP_MID, -1, 15);
+		lv_obj_align(label_timer, scr, LV_ALIGN_IN_TOP_MID, -1, 10);
 		src1_style_Mainscreen_Timer.text.opa = 0;
-		src1_style_Mainscreen_Timer.text.letter_space = 3;
+		src1_style_Mainscreen_Timer.text.letter_space = 1;
 		lv_obj_set_auto_realign (label_timer, true);
 		src1_style_Mainscreen_Timer.text.opa = 0;
 	}
@@ -650,7 +658,7 @@ void Task_Temperaturecreate(void) //温度标签的创建
 	{
 		label_temperature = lv_label_create(scr,label_auto_manual); //创建一个标签
 		lv_label_set_long_mode (label_temperature, LV_LABEL_LONG_EXPAND);
-		lv_obj_align(label_temperature,scr,LV_ALIGN_IN_BOTTOM_LEFT,33,0);
+		lv_obj_align(label_temperature,scr,LV_ALIGN_IN_BOTTOM_LEFT,33,-10);
 		lv_label_set_align(label_temperature,LV_ALIGN_IN_BOTTOM_LEFT);
 		lv_label_set_array_text(label_temperature,(const char*)&table_temp,8);
 //		Task_Temprefresh(Sys.Tempvalue);
@@ -664,7 +672,7 @@ void Task_Humicreate(void) //湿度标签的创建
 	{
 		label_humi = lv_label_create(scr,label_auto_manual); //创建一个标签
 		lv_label_set_long_mode (label_humi, LV_LABEL_LONG_EXPAND);
-		lv_obj_align(label_humi,scr,LV_ALIGN_IN_BOTTOM_MID,58,0);
+		lv_obj_align(label_humi,scr,LV_ALIGN_IN_BOTTOM_MID,49,-10);
 		lv_label_set_align(label_humi,LV_ALIGN_IN_BOTTOM_MID);
 		lv_label_set_array_text(label_humi,(const char*)&table_humi,8);
 //		Task_Humirefresh(Sys.Humivalue);
@@ -707,6 +715,8 @@ void Main_screen_clean()
 }
 
 
+
+u8 x1,y1,x2,y2 =0;
 void Filter_display(void)  //滤网寿命显示
 {
 	static lv_obj_t* bar1;
@@ -742,8 +752,8 @@ void Filter_display(void)  //滤网寿命显示
 		lv_obj_move_foreground (cont2);
 		cont1_style_main.body.border.part=LV_BORDER_FULL;
 		cont1_style_main.body.border.color =LV_COLOR_WHITE;
-		lv_obj_set_size(cont2,240,180);
-		lv_obj_set_pos(cont2,40,30);
+		lv_obj_set_size(cont2,226,180);
+		lv_obj_set_pos(cont2,47,30);
 		cont1_style_main.body.border.width = 1;
 		lv_cont_set_style(cont2,LV_CONT_STYLE_MAIN,&cont1_style_main);
 		lv_cont_set_fit(cont2,LV_FIT_NONE);
@@ -754,21 +764,21 @@ void Filter_display(void)  //滤网寿命显示
 
 
 
-
+//----------------------滤网图标显示 需要显示不同符号 80大小----------------------------------//
 		lv_label_set_recolor (obj_label_pic_filter,true);
 		lv_label_set_style(obj_label_pic_filter,LV_LABEL_STYLE_MAIN,&Label_style_pic_filter);
-		lv_obj_align(obj_label_pic_filter,cont2,LV_ALIGN_IN_LEFT_MID,55,-10);
+		lv_obj_align(obj_label_pic_filter,cont2,LV_ALIGN_IN_LEFT_MID,30,-5);
 		lv_label_set_align(obj_label_pic_filter,LV_ALIGN_CENTER);
-		Label_style_pic_filter.text.font = &my_font_icon_55;
+		Label_style_pic_filter.text.font = &my_font_icon_Filter;
 		lv_label_set_text (obj_label_pic_filter,FILTER_RSR1);
 		Label_style_pic_filter.text.color = LV_COLOR_WHITE;
 		Label_style_pic_filter.text.opa = 245;
 		if(Sys.Filter.percentage==0)
-			Label_style_pic_filter.text.color = LV_COLOR_RED;
+			Label_style_pic_filter.text.color = LV_COLOR_MAKE(0xff,0x21,0x24);  //红色#FF2124;
 
 
-
-		lv_obj_set_size(bar1,9,45);
+//----------------------滤网图标内部百分比的图形Indicate显示----------------------------------//
+		lv_obj_set_size(bar1,14,60);
 		lv_bar_set_range(bar1,0,100);
 		lv_bar_set_value(bar1,Sys.Filter.percentage,LV_ANIM_OFF);
 		lv_bar_set_style(bar1,LV_BAR_STYLE_BG,&bar1_style_bg);
@@ -783,16 +793,14 @@ void Filter_display(void)  //滤网寿命显示
 		}
 		else if(Sys.Filter.percentage>20)
 		{
-			bar1_style_indic.body.main_color = LV_COLOR_YELLOW;
-			bar1_style_indic.body.grad_color = LV_COLOR_YELLOW;
+			bar1_style_indic.body.main_color = LV_COLOR_MAKE(0xff,0xCF,0x00); //黄色#FFCF00
+			bar1_style_indic.body.grad_color = LV_COLOR_MAKE(0xff,0xCF,0x00); //黄色#FFCF00
 		}
 		else
 		{
-			bar1_style_indic.body.main_color = LV_COLOR_RED;
-			bar1_style_indic.body.grad_color = LV_COLOR_RED;
+			bar1_style_indic.body.main_color = LV_COLOR_MAKE(0xff,0x21,0x24);  //红色#FF2124
+			bar1_style_indic.body.grad_color = LV_COLOR_MAKE(0xff,0x21,0x24);  //红色#FF2124
 		}
-
-
 		bar1_style_indic.body.radius = 0;
 		bar1_style_indic.body.padding.inner =0;
 		bar1_style_indic.body.padding.left = 0;
@@ -804,36 +812,40 @@ void Filter_display(void)  //滤网寿命显示
 		bar1_style_bg.body.opa =245;
 		bar1_style_indic.body.opa = 245;
 
-
+//----------------------滤网Filter Status字符显示----------------------------------//
+		Label_style_text_filterstatus.text.font = &my_font_icon_L;
 		lv_label_set_long_mode (obj_label_text_filterstatus, LV_LABEL_LONG_EXPAND);
 		lv_label_set_style(obj_label_text_filterstatus,LV_LABEL_STYLE_MAIN,&Label_style_text_filterstatus);
-		Label_style_text_filterstatus.text.font = &my_font_icon_30;
-		lv_obj_align(obj_label_text_filterstatus,cont2,LV_ALIGN_IN_TOP_LEFT,25,10);
-		lv_label_set_align(obj_label_text_filterstatus,LV_ALIGN_IN_TOP_LEFT);
+		lv_obj_set_size(obj_label_text_filterstatus,200,40);
+		// lv_obj_align(obj_label_text_filterstatus,cont2,LV_ALIGN_IN_TOP_LEFT,25,15);
+		lv_obj_align(obj_label_text_filterstatus,cont2,LV_ALIGN_IN_TOP_LEFT,25,15);
+		lv_label_set_align(obj_label_text_filterstatus,LV_ALIGN_IN_TOP_MID);
+		lv_obj_set_auto_realign (obj_label_text_filterstatus, true);
 		lv_label_set_text (obj_label_text_filterstatus,"Filter status");
-		Label_style_text_filterstatus.text.letter_space = -2;
+		// Label_style_text_filterstatus.text.letter_space = 0;
 		Label_style_text_filterstatus.text.opa = 245;
 
 
-
+//----------------------滤网100%字符显示 需要不同颜色显示----------------------------------//
 		lv_label_set_recolor (obj_label_text_100percent,true);
-		lv_obj_set_size(obj_label_text_100percent,120,30);
-		lv_obj_align(obj_label_text_100percent,cont2,LV_ALIGN_CENTER,32,5);
-		lv_label_set_align(obj_label_text_100percent,LV_ALIGN_CENTER);
+		lv_obj_set_size(obj_label_text_100percent,160,40);
+		lv_obj_align(obj_label_text_100percent,cont2,LV_ALIGN_CENTER,60,25);
+		lv_obj_set_auto_realign(obj_label_text_100percent,true);
 		lv_label_set_style(obj_label_text_100percent,LV_LABEL_STYLE_MAIN,&cont1_style_main);
-		cont1_style_main.text.font = &my_font_icon_30;
+		cont1_style_main.text.font = &my_font_icon_L;
 //		lv_label_set_text (obj_label_text_100percent,"#0000FF 100%#");
+		
 		if(Sys.Filter.percentage>50) //绿色
 		{
 			memcpy(&table_filterpercent[0],"#5EBD82 ",8);
 		}
 		else if(Sys.Filter.percentage>20) //黄色
 		{
-			memcpy(&table_filterpercent[0],"#FFFF00 ",8);
+			memcpy(&table_filterpercent[0],"#FFCF00 ",8);  //黄色#FFCF00
 		}
 		else
 		{
-			memcpy(&table_filterpercent[0],"#FF0000 ",8); //红色
+			memcpy(&table_filterpercent[0],"#FF2124 ",8); //红色#FF2124
 		}
 		if(Sys.Filter.percentage==100)
 		{
@@ -843,7 +855,7 @@ void Filter_display(void)  //滤网寿命显示
 			memcpy(&table_filterpercent[11],table_100percent,4); //
 			lv_label_set_array_text (obj_label_text_100percent, &table_filterpercent[0],15);
 		}
-		else if(Sys.Filter.percentage>10)
+		else if(Sys.Filter.percentage>=10) //修复10%不显示的bug
 		{
 			table_filterpercent[8] = 0x30+Sys.Filter.percentage/10;
 			table_filterpercent[9] = 0x30+Sys.Filter.percentage%10;
@@ -857,15 +869,20 @@ void Filter_display(void)  //滤网寿命显示
 			lv_label_set_array_text (obj_label_text_100percent, &table_filterpercent[0],13);
 		}
 
-		cont1_style_main.text.letter_space = -2;
+		cont1_style_main.text.letter_space = 1;
 		cont1_style_main.text.opa = 245;
 
 
 	}
+	
 	if(++Lvgl.Filtercnt>=3000)
 	{
 		Lvgl.Filtercnt = 0;
-		Lvgl.Curpfunction =Lvgl.Lastpfunction;
+		// Lvgl.Curpfunction =Lvgl.Lastpfunction;
+		x1=lv_obj_get_x(obj_label_pic_filter);
+		y1=lv_obj_get_y(obj_label_pic_filter);
+		x2=lv_obj_get_x(obj_label_text_100percent);
+		y2=lv_obj_get_y(obj_label_text_100percent);
 
 	}
 
@@ -887,12 +904,12 @@ void Filter_reset_animation(void)
 	static lv_style_t cont1_style_main;
 	static lv_style_t bar1_style_bg;
 	static lv_style_t bar1_style_indic;
-	static  short offsetx  = 92;
-	static  short offsety  = 73;
+	static  short offsetx  = 75;
+	static  short offsety  = 76;
 	if(Lvgl.Filtercnt == 400)
 	{
-		offsetx  = 92;
-		offsety  = 73;
+		offsetx  = 75;
+		offsety  = 76;
 		lv_style_copy(&bar1_style_bg,&lv_style_plain_color);
 		lv_style_copy(&bar1_style_indic,&lv_style_plain_color);
 		lv_style_copy(&Label_style_pic_OK,&lv_style_plain_color);
@@ -916,8 +933,8 @@ void Filter_reset_animation(void)
 		lv_obj_move_foreground (cont1);
 		cont1_style_main.body.border.part=LV_BORDER_FULL;
 		cont1_style_main.body.border.color =LV_COLOR_WHITE;
-		lv_obj_set_size(cont1,240,180);
-		lv_obj_set_pos(cont1,40,30);
+		lv_obj_set_size(cont1,226,180);
+		lv_obj_set_pos(cont1,47,30);
 		cont1_style_main.body.border.width = 1;
 		lv_cont_set_style(cont1,LV_CONT_STYLE_MAIN,&cont1_style_main);
 		lv_cont_set_fit(cont1,LV_FIT_NONE);
@@ -926,72 +943,92 @@ void Filter_reset_animation(void)
 		cont1_style_main.body.grad_color = LV_COLOR_BLACK;
 		cont1_style_main.body.border.opa = 60;  //
 
-
+//-------------------------------------------OK图标--------------------------------------//
 		lv_label_set_recolor (obj_label_pic_OK,true);
 		lv_label_set_long_mode(obj_label_pic_OK,LV_LABEL_LONG_EXPAND);
-		lv_obj_set_size(obj_label_pic_OK,55,55);
+		// lv_obj_set_size(obj_label_pic_OK,55,55);
 		lv_label_set_style(obj_label_pic_OK,LV_LABEL_STYLE_MAIN,&Label_style_pic_OK);
 		lv_obj_set_pos (obj_label_pic_OK, offsetx, offsety);
-		Label_style_pic_OK.text.font = &my_font_icon_55;
+		Label_style_pic_OK.text.font = &my_font_icon_Filter;
 		lv_label_set_text (obj_label_pic_OK,FILTER_RSR);
 		Label_style_pic_OK.text.opa = 0;
 		Label_style_pic_OK.text.color=LV_COLOR_MAKE(0x5e,0xbd,0x82); //绿色#5EBD82;
 
 
-
+//---------------------------------------------大滤网图标----------------------------------------//
 		lv_label_set_style(obj_label_pic_filter,LV_LABEL_STYLE_MAIN,&Label_style_pic_filter);
-		Label_style_pic_filter.text.font = &my_font_icon_55;
+		Label_style_pic_filter.text.font = &my_font_icon_Filter;
 		lv_label_set_text (obj_label_pic_filter,FILTER_RSR1);
 		Label_style_pic_filter.text.color = LV_COLOR_WHITE;
 		Label_style_pic_filter.text.opa = 0;
 		lv_obj_set_pos (obj_label_pic_filter, offsetx, offsety);
 
-		lv_obj_set_size(obj_label_text_filterreset,180,30);
-		lv_obj_align(obj_label_text_filterreset,cont1,LV_ALIGN_IN_TOP_LEFT,25,10);
-		lv_label_set_align(obj_label_text_filterreset,LV_ALIGN_IN_TOP_LEFT);
+//---------------------------------------------Flter reset字符----------------------------------------//
+		lv_obj_set_size(obj_label_text_filterstatus,200,40);
+		lv_label_set_long_mode (obj_label_text_filterreset, LV_LABEL_LONG_EXPAND);
+		lv_obj_align(obj_label_text_filterreset,cont1,LV_ALIGN_IN_TOP_LEFT,32,15);
+		lv_label_set_align(obj_label_text_filterreset,LV_ALIGN_IN_TOP_MID);
 		lv_label_set_style(obj_label_text_filterreset,LV_LABEL_STYLE_MAIN,&Label_style_text_filterreset);
-		Label_style_text_filterreset.text.font = &my_font_icon_30;
+		lv_obj_set_auto_realign (obj_label_text_filterreset, true);
+		Label_style_text_filterreset.text.font = &my_font_icon_L;
 		lv_label_set_text (obj_label_text_filterreset,"Filter reset");
-		Label_style_text_filterreset.text.letter_space = -2;
+		Label_style_text_filterreset.text.letter_space = 0;
 		Label_style_text_filterreset.text.opa = 0;
 
 
-
-		lv_obj_set_size(obj_label_text_filterstatus,180,30);
-		lv_obj_align(obj_label_text_filterstatus,cont1,LV_ALIGN_IN_TOP_LEFT,25,10);
-		lv_label_set_align(obj_label_text_filterstatus,LV_ALIGN_IN_TOP_LEFT);
+//---------------------------------------------Filter status 字符----------------------------------------//
+		lv_label_set_long_mode (obj_label_text_filterstatus, LV_LABEL_LONG_EXPAND);
+		lv_obj_set_size(obj_label_text_filterstatus,200,40);
+		lv_obj_align(obj_label_text_filterstatus,cont1,LV_ALIGN_IN_TOP_LEFT,25,15);
+		lv_label_set_align(obj_label_text_filterstatus,LV_ALIGN_IN_TOP_MID);
+		lv_obj_set_auto_realign (obj_label_text_filterstatus, true);
 		lv_label_set_style(obj_label_text_filterstatus,LV_LABEL_STYLE_MAIN,&Label_style_text_filterstatus);
-		Label_style_text_filterstatus.text.font = &my_font_icon_30;
+		Label_style_text_filterstatus.text.font = &my_font_icon_L;
 		lv_label_set_text (obj_label_text_filterstatus,"Filter status");
-		Label_style_text_filterstatus.text.letter_space = -2;
+		Label_style_text_filterstatus.text.letter_space = 0;
 		Label_style_text_filterstatus.text.opa = 0;
 
 
-
+//---------------------------------------------100% 字符----------------------------------------//
 		lv_label_set_recolor (obj_label_text_100percent,true);
-		lv_obj_set_size(obj_label_text_100percent,120,30);
-		lv_obj_align(obj_label_text_100percent,cont1,LV_ALIGN_CENTER,32,5);
-		lv_label_set_align(obj_label_text_100percent,LV_ALIGN_CENTER);
+		lv_label_set_long_mode (obj_label_text_100percent, LV_LABEL_LONG_EXPAND);
+		lv_obj_set_pos(obj_label_text_100percent,131,100); // 131 100
+		lv_obj_set_size(obj_label_text_100percent,180,50);
+		// lv_obj_align(obj_label_text_100percent,cont2,LV_ALIGN_CENTER,60,25);
+		// lv_obj_set_auto_realign(obj_label_text_100percent,true);
 		lv_label_set_style(obj_label_text_100percent,LV_LABEL_STYLE_MAIN,&cont1_style_main);
-		cont1_style_main.text.font = &my_font_icon_30;
-		lv_label_set_text (obj_label_text_100percent,"#5EBD82 100%#");
-		cont1_style_main.text.letter_space = -2;
+		cont1_style_main.text.font = &my_font_icon_L;
+		// lv_label_set_text (obj_label_text_100percent,"#5EBD82 100%%#");
+		lv_label_set_array_text (obj_label_text_100percent, &table_100percentdispgreen[0],15);
+		cont1_style_main.text.letter_space = 0;
 		cont1_style_main.text.opa = 0;
 
 
 
-
-		lv_obj_set_size(bar1,9,45);
+//---------------------------------------------滤网图标内部Indicate指示----------------------------------------//
+		lv_obj_set_size(bar1,14,60);
 		lv_bar_set_range(bar1,0,100);
-		lv_bar_set_value(bar1,100,LV_ANIM_OFF);
+		lv_bar_set_value(bar1,Sys.Filter.percentage,LV_ANIM_OFF);
 		lv_bar_set_style(bar1,LV_BAR_STYLE_BG,&bar1_style_bg);
 		lv_bar_set_style(bar1,LV_BAR_STYLE_INDIC,&bar1_style_indic);
 
 		bar1_style_bg.body.main_color = LV_COLOR_BLACK;
 		bar1_style_bg.body.grad_color = LV_COLOR_BLACK;
-		bar1_style_indic.body.main_color = LV_COLOR_MAKE(0x5e,0xbd,0x82); //绿色#5EBD82;
-		bar1_style_indic.body.grad_color = LV_COLOR_MAKE(0x5e,0xbd,0x82); //绿色#5EBD82;
-
+		if(Sys.Filter.percentage>50)
+		{
+			bar1_style_indic.body.main_color = LV_COLOR_MAKE(0x5e,0xbd,0x82); //绿色#5EBD82
+			bar1_style_indic.body.grad_color = LV_COLOR_MAKE(0x5e,0xbd,0x82); //绿色#5EBD82
+		}
+		else if(Sys.Filter.percentage>20)
+		{
+			bar1_style_indic.body.main_color = LV_COLOR_MAKE(0xff,0xCF,0x00); //黄色#FFCF00
+			bar1_style_indic.body.grad_color = LV_COLOR_MAKE(0xff,0xCF,0x00); //黄色#FFCF00
+		}
+		else
+		{
+			bar1_style_indic.body.main_color = LV_COLOR_MAKE(0xff,0x21,0x24);  //红色#FF2124
+			bar1_style_indic.body.grad_color = LV_COLOR_MAKE(0xff,0x21,0x24);  //红色#FF2124
+		}
 		bar1_style_indic.body.radius = 0;
 		bar1_style_indic.body.padding.inner =0;
 		bar1_style_indic.body.padding.left = 0;
@@ -999,7 +1036,7 @@ void Filter_reset_animation(void)
 		bar1_style_indic.body.padding.right = 0;
 		bar1_style_indic.body.padding.bottom = 0;
 		bar1_style_indic.body.border.part = LV_BORDER_FULL;
-		lv_obj_align(bar1,obj_label_pic_filter,LV_ALIGN_CENTER,0,0);
+		lv_obj_align(bar1,obj_label_pic_filter,LV_ALIGN_CENTER,0,0); // -1 10
 		bar1_style_bg.body.opa = 0;
 		bar1_style_indic.body.opa = 0;
 
@@ -1110,6 +1147,62 @@ void Filter_reset_animation(void)
 	}
 
 }
+void fFactory_process(void)  //产测模式
+{
+	static lv_obj_t* Src_fac;  // 工厂模式时候的界面
+	static lv_obj_t* label_MainboardSoftwareversion;  // 显示板软件版本
+	static lv_obj_t* label_Sensorsoftwareversion;  // 传感器板子软件版本
+	static lv_obj_t* label_PCBversion;  // PCB硬件版本
+	static lv_obj_t* label_Comletedata;  // 完成日期
+	static lv_style_t lv_style_src_fac; 
+
+
+	if(Src_fac==NULL)	
+	{
+		Src_fac=lv_obj_create(scr,NULL);
+		label_MainboardSoftwareversion=lv_obj_create(Src_fac,NULL);
+		lv_label_set_long_mode(&label_MainboardSoftwareversion,LV_LABEL_LONG_EXPAND); // 字符自己展开
+		lv_obj_align();
+		label_Sensorsoftwareversion=lv_obj_create(Src_fac,label_MainboardSoftwareversion);
+		label_PCBversion=lv_obj_create(Src_fac,label_MainboardSoftwareversion);
+		label_Comletedata=lv_obj_create(Src_fac,label_MainboardSoftwareversion);
+		lv_style_copy(&lv_style_src_fac,&lv_style_plain_color); // 将系统颜色参数复制给产测专用的
+		lv_obj_set_size(Src_fac,320,240);	
+		lv_style_src_fac.text.font=&my_font_icon_L;
+	}
+	lv_obj_set_style(Src_fac,&lv_style_src_fac);
+
+	
+	switch (Sys.Factorysteps)
+	{
+	case /* constant-expression */0:
+		/* code */
+		lv_style_src_fac.body.main_color = LV_COLOR_RED;
+		lv_style_src_fac.body.grad_color = LV_COLOR_RED;
+		break;
+	case /* constant-expression */1:
+		/* code */
+		lv_style_src_fac.body.main_color = LV_COLOR_GREEN;
+		lv_style_src_fac.body.grad_color = LV_COLOR_GREEN;
+		break;
+	case /* constant-expression */2:
+		/* code */
+		lv_style_src_fac.body.main_color = LV_COLOR_BLUE;
+		lv_style_src_fac.body.grad_color = LV_COLOR_BLUE;
+		break;
+	
+	default:
+		break;
+	}
+	
+	
+	
+	
+	
+	Sys.Factoryflg = 1; // 产测模式
+
+}
+
 
 void sleep_screen(void)
 {
@@ -1250,8 +1343,8 @@ void Normal_Display(void)  //正常显示
 		}
 		if(Sys.Warnup_Cnt<=300)  // 30S预热时间内显示
 		{
-			lv_label_set_array_text(label_tvocvalue,"---",3);
-			lv_label_set_array_text(label_pm25value,"---",3);
+			lv_label_set_array_text(label_tvocvalue,"- - -",5);
+			lv_label_set_array_text(label_pm25value,"- - -",5);
 		}
 		else
 		{
@@ -1410,10 +1503,10 @@ void Turn_On_Animation(void)
 						lv_obj_set_hidden (label_auto_manual,true); //隐藏 标签
 					}
 
-					if(lv_obj_get_hidden(Img_fanstate)==false && Img_fanstate!=NULL)
-					{
-						lv_obj_set_hidden (Img_fanstate,true); //隐藏 风速度
-					}
+					// if(lv_obj_get_hidden(Img_fanstate)==false && Img_fanstate!=NULL)
+					// {
+					// 	lv_obj_set_hidden (Img_fanstate,true); //隐藏 风速度
+					// }
 				}
 				else
 				{
@@ -1422,20 +1515,20 @@ void Turn_On_Animation(void)
 						lv_obj_set_hidden (label_auto_manual,false); //显示 标签
 					}
 
-					if(Sys.opmode == emodeAuto)
-					{
-						if(lv_obj_get_hidden(Img_fanstate)==false && Img_fanstate!=NULL)
-						{
-							lv_obj_set_hidden (Img_fanstate,true); //隐藏 风速度
-						}
-					}
-					else // 手动
-					{
-						if(lv_obj_get_hidden(Img_fanstate)==true && Img_fanstate!=NULL)
-						{
-							lv_obj_set_hidden (Img_fanstate,false); //显示 风速度
-						}
-					}
+					// if(Sys.opmode == emodeAuto)
+					// {
+					// 	if(lv_obj_get_hidden(Img_fanstate)==false && Img_fanstate!=NULL)
+					// 	{
+					// 		lv_obj_set_hidden (Img_fanstate,true); //隐藏 风速度
+					// 	}
+					// }
+					// else // 手动
+					// {
+					// 	if(lv_obj_get_hidden(Img_fanstate)==true && Img_fanstate!=NULL)
+					// 	{
+					// 		lv_obj_set_hidden (Img_fanstate,false); //显示 风速度
+					// 	}
+					// }
 					Task_Moderefresh(Sys.opmode);
 				}
 
@@ -1621,7 +1714,7 @@ void LCD_Init(void)
 	delay_cnt(120); //Delay 120ms
 
 	LCD_WR_REG(0x36);  // 屏幕的显示方向等设置
-	LCD_WR_DATA(0xA0);
+	LCD_WR_DATA(0x60);// 旋转180的话 用0xA0
 
 	LCD_WR_REG(0x3a);    // 像素设置
 	LCD_WR_DATA(0x55);	// 16位 565 RGB格式
@@ -1719,18 +1812,18 @@ void fBuz_Driver(void)  //蜂鸣器驱动 1MS一次
 {
 	static u8 cnt = 200;
 
-	if(Sys.Buzcnt)
-	{
-		Sys.Buzcnt--;
-		R_GPT_Start (&g_Buzz_pwm_ctrl);
-		Buz_En();
-	}
-	else
-	{
-		Buz_Dis();
-		R_GPT_Stop (&g_Buzz_pwm_ctrl);
+	// if(Sys.Buzcnt)
+	// {
+	// 	Sys.Buzcnt--;
+	// 	R_GPT_Start (&g_Buzz_pwm_ctrl);
+	// 	Buz_En();
+	// }
+	// else
+	// {
+	// 	Buz_Dis();
+	// 	R_GPT_Stop (&g_Buzz_pwm_ctrl);
 
-	}
+	// }
 }
 
 void fTurn_on(void)
@@ -2333,7 +2426,7 @@ void fBoard_Sensorcommflow(void) // 2ms
 			Sys.comm.txdata[i]+=Sys.comm.txdata[j];
 		}
 		i++;
-		R_SCI_UART_Write (&g_uart7_board_ctrl,&Sys.comm.txdata[0],6);
+		R_SCI_UART_Write (&g_uart_sensor_ctrl,&Sys.comm.txdata[0],6);
 		Sys.comm.rxindex = 0;
 		Sys.comm.steps = 1;
 		break;
@@ -2371,7 +2464,7 @@ void fBoard_Sensorcommflow(void) // 2ms
 //				Sys.comm.txdata[i]+=Sys.comm.txdata[j];
 //			}
 //			i++;
-//			R_SCI_UART_Write (&g_uart7_board_ctrl,&Sys.comm.txdata[0],6);
+//			R_SCI_UART_Write (&g_uart_sensor_ctrl,&Sys.comm.txdata[0],6);
 //			Sys.comm.rxindex = 0;
 //			Sys.comm.steps = 2;
 //			break;
@@ -2556,7 +2649,7 @@ void fMotor_ctrl(void)
 		Sys.Speed.Reference = Sys.Speed.FeedBack;
 
 	}
-	R_GPT_DutyCycleSet(&g_motor_pwm_ctrl,Sys.Speed.PutOut,GPT_IO_PIN_GTIOCB);
+	R_GPT_DutyCycleSet(&g_motor_pwm_ctrl,Sys.Speed.PutOut,GPT_IO_PIN_GTIOCA);
 
 }
 void fDisp_LedDriver(void) // LED驱动控制 125us
@@ -2782,16 +2875,16 @@ void fDisp_Init(void)
 	lv_style_copy(&src1_style_Mainscreen_Timer,&lv_style_plain_color);
 	lv_style_copy(&src1_style_Mainscreen_Wifi,&lv_style_plain_color);
 	lv_style_copy(&src1_style_Mainscreen_Lock,&lv_style_plain_color);
-	src1_style_Mainscreen.text.font = &my_font_icon_30;  // 字体为自建字体
-	src1_style_Mainscreen_Timer.text.font= &my_font_icon_30;
-	src1_style_Mainscreen_Wifi.text.font= &my_font_icon_30;
-	src1_style_Mainscreen_Lock.text.font= &my_font_icon_30;
-	src1_style_Mainscreen_Bigstyle.text.font= &my_font_icon_55;
-	src1_style_Mainscreen_Littlestyle.text.font= &my_font_icon_30;
+	src1_style_Mainscreen.text.font = &my_font_icon_L;  // 字体为自建字体
+	src1_style_Mainscreen_Timer.text.font= &my_font_icon_L;
+	src1_style_Mainscreen_Wifi.text.font= &my_font_icon_L;
+	src1_style_Mainscreen_Lock.text.font= &my_font_icon_L;
+	src1_style_Mainscreen_Bigstyle.text.font= &my_font_icon_B;
+	src1_style_Mainscreen_Littlestyle.text.font= &my_font_icon_L;
 
 
-	src1_style_3rd.text.font = &my_font_icon_30;  // 字体为自建字体
-	src1_style_2nd.text.font = &my_font_icon_55;
+	src1_style_3rd.text.font = &my_font_icon_L;  // 字体为自建字体
+	src1_style_2nd.text.font = &my_font_icon_B;
 
 
 	Lvgl.Initcomplete = 1; // 初始化完毕 可以执行任务了
@@ -2817,18 +2910,18 @@ void  Sys_Init(void) //系统初始化函数
 
 
 	R_GPT_Open (&g_motor_pwm_ctrl,&g_motor_pwm_cfg); // 电机驱动pwm
-	R_GPT_DutyCycleSet(&g_motor_pwm_ctrl,SPDOFF,GPT_IO_PIN_GTIOCB);
+	R_GPT_DutyCycleSet(&g_motor_pwm_ctrl,SPDOFF,GPT_IO_PIN_GTIOCA);
 	R_GPT_Start (&g_motor_pwm_ctrl);
-	R_GPT_DutyCycleSet(&g_motor_pwm_ctrl,SPDOFF,GPT_IO_PIN_GTIOCB);
+	R_GPT_DutyCycleSet(&g_motor_pwm_ctrl,SPDOFF,GPT_IO_PIN_GTIOCA);
 
 
-	R_GPT_Open (&g_Buzz_pwm_ctrl,&g_Buzz_pwm_cfg); // 电机驱动pwm
-	R_GPT_DutyCycleSet(&g_Buzz_pwm_ctrl,0x30d4,GPT_IO_PIN_GTIOCB);
+	// R_GPT_Open (&g_Buzz_pwm_ctrl,&g_Buzz_pwm_cfg); // 电机驱动pwm
+	// R_GPT_DutyCycleSet(&g_Buzz_pwm_ctrl,0x30d4,GPT_IO_PIN_GTIOCB);
 
 
 //	R_GPT_Start (&g_Buzz_pwm_ctrl);
 
-	R_SCI_UART_Open(&g_uart7_board_ctrl,&g_uart7_board_cfg); // 1MS中断 给LVGL 提供心跳
+	R_SCI_UART_Open(&g_uart_sensor_ctrl,&g_uart_sensor_cfg); // 1MS中断 给LVGL 提供心跳
 
 //	__IOM uint32_t IELS : 9;   /*!< [8..0] ICU Event selection to NVICSet the number for the event
 //										   *   signal to be linked .													 */
@@ -2965,6 +3058,7 @@ void fDeviceData_Init(void)
 	Sys.power = 0;
 	Sys.Filter.accumulatedhour = 0;
 	Lvgl.Curpfunction = Turn_On_Animation;
+	
 	Lvgl.Lastpfunction = Normal_Display;
 	Lvgl.cnt = 0;
 	Lvgl.Filtercnt = 0;
@@ -3011,6 +3105,88 @@ void fDustlevel_cal(void)
 	}
 }
 
+void fLCD_reinit(void)
+{
+	LCD_WR_REG(0x36);  // 屏幕的显示方向等设置
+	LCD_WR_DATA(0x60);// 旋转180的话 用0xA0
+
+	LCD_WR_REG(0x3a);    // 像素设置
+	LCD_WR_DATA(0x55);	// 16位 565 RGB格式
+
+	LCD_WR_REG(0x21);	// 黑白反色 ,IPS模式
+
+	LCD_WR_REG(0xb2);
+	LCD_WR_DATA(0x0c);
+	LCD_WR_DATA(0x0c);
+	LCD_WR_DATA(0x00);
+	LCD_WR_DATA(0x33);
+	LCD_WR_DATA(0x33);
+
+	LCD_WR_REG(0xB7);
+	LCD_WR_DATA(0x35);   	//35
+
+	LCD_WR_REG(0xBB);     //VOCM
+	LCD_WR_DATA(0x12);
+
+	LCD_WR_REG(0xC0);
+	LCD_WR_DATA(0x2C);
+
+	LCD_WR_REG(0xC2);
+	LCD_WR_DATA(0x01);
+
+	LCD_WR_REG(0xC3);     //GVDD
+	LCD_WR_DATA(0x27);
+
+	LCD_WR_REG(0xC4);
+	LCD_WR_DATA(0x20);
+
+	LCD_WR_REG(0xC6);
+	LCD_WR_DATA(0x0F);
+
+	LCD_WR_REG(0xD0);
+	LCD_WR_DATA(0xA4);
+	LCD_WR_DATA(0xA1);
+
+	LCD_WR_REG(0xE0);
+	LCD_WR_DATA(0xD0);
+	LCD_WR_DATA(0x0F);
+	LCD_WR_DATA(0x19);
+	LCD_WR_DATA(0x0F);
+	LCD_WR_DATA(0x10);
+	LCD_WR_DATA(0x1B);
+	LCD_WR_DATA(0x43);
+	LCD_WR_DATA(0x44);
+	LCD_WR_DATA(0x51);
+	LCD_WR_DATA(0x0A);
+	LCD_WR_DATA(0x13);
+	LCD_WR_DATA(0x11);
+	LCD_WR_DATA(0x20);
+	LCD_WR_DATA(0x24);
+
+	LCD_WR_REG(0xE1);
+	LCD_WR_DATA(0xD0);
+	LCD_WR_DATA(0x0F);
+	LCD_WR_DATA(0x18);
+	LCD_WR_DATA(0x10);
+	LCD_WR_DATA(0x11);
+	LCD_WR_DATA(0x1A);
+	LCD_WR_DATA(0x42);
+	LCD_WR_DATA(0x44);
+	LCD_WR_DATA(0x52);
+	LCD_WR_DATA(0x0B);
+	LCD_WR_DATA(0x17);
+	LCD_WR_DATA(0x19);
+	LCD_WR_DATA(0x21);
+	LCD_WR_DATA(0x24);
+
+//	 LCD_WR_REG(0x55);		// 色彩增强
+
+	LCD_WR_REG(0x29); //Display on
+}
+
+
+
+
 /*
 2022.01.16
 1.开始记录开发步骤
@@ -3032,14 +3208,19 @@ void fDustlevel_cal(void)
 2022.02.16
 1.重新对于线条和进度条颜色取色，彩条宽度减半.
 
+2022.02.27
+1.由于PCB升级为第三版本，所以部分IO口相对应的有所调整.修改宏定义.修改PWM输出部分原先是GTIOCB改为GTIOCA
+2.显示旋转了180°,修改显示参数
+3.修改一些字模和字体。
+4.增加一函数自检显示使用.(只完成一部分)
+5.还有滤网复位时候的透明变化未实现.
+
 */
 void hal_entry(void)
 {
 	/* TODO: add your own code here */
 	qe_touch_Init ();
-
 	Sys_Init();
-
 	lv_init(); //lvgl系统初始化
 	lv_port_disp_init(); //lvgl显示接口初始化 ,放在 lv_init()的后面
 	LCD_Init();
@@ -3051,8 +3232,6 @@ void hal_entry(void)
 	R_GPT_Start (&g_timer1_ctrl);
 	R_GPT_Start (&g_timer0_125us_ctrl);
 	__enable_irq();
-
-
 	while(1)
 	{
 		Lvgl.Taskcomplete = 0;
@@ -3073,6 +3252,11 @@ void hal_entry(void)
 		{
 			gTime1sflg = 0;
 			fFilter_Cal();  //滤网寿命计算
+			if(Sys.Factoryflg)
+			{
+				Lvgl.Curpfunction = fFactory_process;
+			}
+			// fLCD_reinit();
 		}
 	}
 #if BSP_TZ_SECURE_BUILD
@@ -3151,6 +3335,7 @@ void Timer1_1ms_callback (timer_callback_args_t * p_args)
 	{
 		gFre0_5hzflashflg ^=1;
 		gTime1sflg = 0xff;
+		
 
 	}
 	if(sT1mscnt>=8000)
@@ -3164,7 +3349,7 @@ void spi_callback (spi_callback_args_t * p_args)
 {
 	;
 }
-void uart7_board_callback(uart_callback_args_t * p_args)
+void uart_sensor_callback(uart_callback_args_t * p_args)
 {
 	if(p_args->event==UART_EVENT_RX_CHAR)
 	{

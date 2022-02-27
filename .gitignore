@@ -7,7 +7,6 @@ TL2855_Bosch/keilkilll.bat
 TL2855_Bosch/Listings/
 TL2855_Bosch/Objects/
 TL2855_Bosch/R7FA6M4AF3CFM.pincfg
-TL2855_Bosch/TL2855_Bosch.uvprojx
 TL2855_Bosch/TL2855_Bosch.uvoptx
 TL2855_Bosch/TL2855_Bosch.uvguix.28000078
 TL2855_Bosch/TL2855_Bosch.si4project/TL2855_Bosch.bookmarks.xml
@@ -698,3 +697,4 @@ TL2855_Bosch/TL2855_Bosch.si4project/cache/parse/RTE__TL2855_Bosch_RTE_Component
 TL2855_Bosch/TL2855_Bosch.si4project/cache/parse/src_hal_entry.c.sisc
 TL2855_Bosch/TL2855_Bosch.si4project/cache/parse/src_hal_entry.h.sisc
 TL2855_Bosch/ra_cfg.txt
+TL2855_Bosch/TL2855_Bosch.si4project/

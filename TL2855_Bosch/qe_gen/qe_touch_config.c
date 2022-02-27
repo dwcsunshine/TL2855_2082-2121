@@ -52,12 +52,12 @@ CTSU Related Information for [CONFIG01] configuration.
 
 const ctsu_element_cfg_t g_qe_ctsu_element_cfg_config01[] =
 {
-    { .ssdiv = CTSU_SSDIV_2000, .so = 0x07D, .snum = 0x07, .sdpa = 0x03 },
-    { .ssdiv = CTSU_SSDIV_2000, .so = 0x07C, .snum = 0x07, .sdpa = 0x03 },
-    { .ssdiv = CTSU_SSDIV_2000, .so = 0x07F, .snum = 0x07, .sdpa = 0x03 },
-    { .ssdiv = CTSU_SSDIV_2000, .so = 0x075, .snum = 0x07, .sdpa = 0x03 },
-    { .ssdiv = CTSU_SSDIV_2000, .so = 0x08E, .snum = 0x07, .sdpa = 0x03 },
-    { .ssdiv = CTSU_SSDIV_2000, .so = 0x08F, .snum = 0x07, .sdpa = 0x03 },
+    { .ssdiv = CTSU_SSDIV_1330, .so = 0x02E, .snum = 0x03, .sdpa = 0x06 },
+    { .ssdiv = CTSU_SSDIV_1330, .so = 0x02E, .snum = 0x03, .sdpa = 0x06 },
+    { .ssdiv = CTSU_SSDIV_1330, .so = 0x032, .snum = 0x03, .sdpa = 0x06 },
+    { .ssdiv = CTSU_SSDIV_1330, .so = 0x02E, .snum = 0x03, .sdpa = 0x06 },
+    { .ssdiv = CTSU_SSDIV_1330, .so = 0x03E, .snum = 0x03, .sdpa = 0x06 },
+    { .ssdiv = CTSU_SSDIV_1330, .so = 0x03C, .snum = 0x03, .sdpa = 0x06 },
 };
 
 const ctsu_cfg_t g_qe_ctsu_cfg_config01 =
@@ -127,38 +127,38 @@ const touch_button_cfg_t g_qe_touch_button_cfg_config01[] =
     /* k1_auto */
     {
         .elem_index = 0,
-        .threshold  = 1441,
-        .hysteresis = 72,
+        .threshold  = 847,
+        .hysteresis = 42,
     },
     /* k2_fl */
     {
         .elem_index = 1,
-        .threshold  = 1384,
-        .hysteresis = 69,
+        .threshold  = 690,
+        .hysteresis = 34,
     },
     /* k3_onoff */
     {
         .elem_index = 2,
-        .threshold  = 1213,
-        .hysteresis = 60,
+        .threshold  = 700,
+        .hysteresis = 35,
     },
     /* k4_sleep */
     {
         .elem_index = 3,
-        .threshold  = 1021,
-        .hysteresis = 51,
+        .threshold  = 562,
+        .hysteresis = 28,
     },
     /* k5_timer */
     {
         .elem_index = 4,
-        .threshold  = 1056,
-        .hysteresis = 52,
+        .threshold  = 532,
+        .hysteresis = 26,
     },
     /* k6_speed */
     {
         .elem_index = 5,
-        .threshold  = 1020,
-        .hysteresis = 51,
+        .threshold  = 465,
+        .hysteresis = 23,
     },
 };
 #endif

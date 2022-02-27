@@ -37,10 +37,10 @@
         #define VECTOR_NUMBER_SCI1_TXI ((IRQn_Type) 11) /* SCI1 TXI (Transmit data empty) */
         #define VECTOR_NUMBER_SCI1_TEI ((IRQn_Type) 12) /* SCI1 TEI (Transmit end) */
         #define VECTOR_NUMBER_SCI1_ERI ((IRQn_Type) 13) /* SCI1 ERI (Receive error) */
-        #define VECTOR_NUMBER_SCI7_RXI ((IRQn_Type) 14) /* SCI7 RXI (Received data full) */
-        #define VECTOR_NUMBER_SCI7_TXI ((IRQn_Type) 15) /* SCI7 TXI (Transmit data empty) */
-        #define VECTOR_NUMBER_SCI7_TEI ((IRQn_Type) 16) /* SCI7 TEI (Transmit end) */
-        #define VECTOR_NUMBER_SCI7_ERI ((IRQn_Type) 17) /* SCI7 ERI (Receive error) */
+        #define VECTOR_NUMBER_SCI2_RXI ((IRQn_Type) 14) /* SCI2 RXI (Received data full) */
+        #define VECTOR_NUMBER_SCI2_TXI ((IRQn_Type) 15) /* SCI2 TXI (Transmit data empty) */
+        #define VECTOR_NUMBER_SCI2_TEI ((IRQn_Type) 16) /* SCI2 TEI (Transmit end) */
+        #define VECTOR_NUMBER_SCI2_ERI ((IRQn_Type) 17) /* SCI2 ERI (Receive error) */
         #define VECTOR_NUMBER_FCU_FRDYI ((IRQn_Type) 18) /* FCU FRDYI (Flash ready interrupt) */
         #define VECTOR_NUMBER_FCU_FIFERR ((IRQn_Type) 19) /* FCU FIFERR (Flash access error interrupt) */
         typedef enum IRQn {
@@ -69,10 +69,10 @@
             SCI1_TXI_IRQn = 11, /* SCI1 TXI (Transmit data empty) */
             SCI1_TEI_IRQn = 12, /* SCI1 TEI (Transmit end) */
             SCI1_ERI_IRQn = 13, /* SCI1 ERI (Receive error) */
-            SCI7_RXI_IRQn = 14, /* SCI7 RXI (Received data full) */
-            SCI7_TXI_IRQn = 15, /* SCI7 TXI (Transmit data empty) */
-            SCI7_TEI_IRQn = 16, /* SCI7 TEI (Transmit end) */
-            SCI7_ERI_IRQn = 17, /* SCI7 ERI (Receive error) */
+            SCI2_RXI_IRQn = 14, /* SCI2 RXI (Received data full) */
+            SCI2_TXI_IRQn = 15, /* SCI2 TXI (Transmit data empty) */
+            SCI2_TEI_IRQn = 16, /* SCI2 TEI (Transmit end) */
+            SCI2_ERI_IRQn = 17, /* SCI2 ERI (Receive error) */
             FCU_FRDYI_IRQn = 18, /* FCU FRDYI (Flash ready interrupt) */
             FCU_FIFERR_IRQn = 19, /* FCU FIFERR (Flash access error interrupt) */
         } IRQn_Type;

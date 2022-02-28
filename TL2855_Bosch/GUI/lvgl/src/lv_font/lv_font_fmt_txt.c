@@ -74,7 +74,7 @@ const uint8_t * lv_font_get_bitmap_fmt_txt(const lv_font_t * font, uint32_t unic
  *         false: the letter was not found, no data is loaded to `dsc_out`
  */
 bool lv_font_get_glyph_dsc_fmt_txt(const lv_font_t * font, lv_font_glyph_dsc_t * dsc_out, uint32_t unicode_letter, uint32_t unicode_letter_next)
-{
+ {
     lv_font_fmt_txt_dsc_t * fdsc = (lv_font_fmt_txt_dsc_t *) font->dsc;
     uint32_t gid = get_glyph_dsc_id(font, unicode_letter);
     if(!gid) return false;

@@ -17,7 +17,7 @@
         <TargetCommonOption>
           <Device>R7FA6M4AF3CFM</Device>
           <Vendor>Renesas</Vendor>
-          <PackID>Renesas.RA_DFP.3.0.1</PackID>
+          <PackID>Renesas.RA_DFP.3.6.0</PackID>
           <PackURL>https://www2.renesas.eu/Keil_MDK_Packs/</PackURL>
           <Cpu>IRAM(0x20000000,0x040000) IROM(0,0x100000) IROM2(0x08000000,0x002000) IROM3(0x0100A000,0x300) CPUTYPE("Cortex-M33") FPU3(SFPU) DSP TZ CLOCK(12000000) ELITTLE</Cpu>
           <FlashUtilSpec></FlashUtilSpec>
@@ -902,7 +902,14 @@
       </gpdsc>
     </gpdscs>
     <apis/>
-    <components/>
+    <components>
+      <component Cclass="Flex Software" Cgroup="RA Configuration" Cvendor="Renesas" Cversion="1.0.0" condition="RA Device" generator="Renesas RA Smart Configurator">
+        <package name="RA_DFP" schemaVersion="1.7.2" url="https://www2.renesas.eu/Keil_MDK_Packs/" vendor="Renesas" version="3.6.0"/>
+        <targetInfos>
+          <targetInfo name="TL2855_Bosch"/>
+        </targetInfos>
+      </component>
+    </components>
     <files/>
   </RTE>
 

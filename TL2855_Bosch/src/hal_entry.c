@@ -716,7 +716,7 @@ void Main_screen_clean()
 
 
 
-u8 x1,y1,x2,y2 =0;
+
 void Filter_display(void)  //滤网寿命显示
 {
 	static lv_obj_t* bar1;
@@ -878,11 +878,11 @@ void Filter_display(void)  //滤网寿命显示
 	if(++Lvgl.Filtercnt>=3000)
 	{
 		Lvgl.Filtercnt = 0;
-		// Lvgl.Curpfunction =Lvgl.Lastpfunction;
-		x1=lv_obj_get_x(obj_label_pic_filter);
-		y1=lv_obj_get_y(obj_label_pic_filter);
-		x2=lv_obj_get_x(obj_label_text_100percent);
-		y2=lv_obj_get_y(obj_label_text_100percent);
+		Lvgl.Curpfunction =Lvgl.Lastpfunction;
+		// x1=lv_obj_get_x(obj_label_pic_filter);
+		// y1=lv_obj_get_y(obj_label_pic_filter);
+		// x2=lv_obj_get_x(obj_label_text_100percent);
+		// y2=lv_obj_get_y(obj_label_text_100percent);
 
 	}
 
@@ -1149,7 +1149,7 @@ void Filter_reset_animation(void)
 }
 void fFactory_process(void)  //产测模式
 {
-	static lv_obj_t* Src_fac;  // 工厂模式时候的界面
+	static lv_obj_t* Src_fac=NULL;  // 工厂模式时候的界面
 	static lv_obj_t* label_MainboardSoftwareversion;  // 显示板软件版本
 	static lv_obj_t* label_Sensorsoftwareversion;  // 传感器板子软件版本
 	static lv_obj_t* label_PCBversion;  // PCB硬件版本
@@ -1159,36 +1159,77 @@ void fFactory_process(void)  //产测模式
 
 	if(Src_fac==NULL)	
 	{
-		Src_fac=lv_obj_create(scr,NULL);
-		label_MainboardSoftwareversion=lv_obj_create(Src_fac,NULL);
-		lv_label_set_long_mode(&label_MainboardSoftwareversion,LV_LABEL_LONG_EXPAND); // 字符自己展开
-		lv_obj_align();
-		label_Sensorsoftwareversion=lv_obj_create(Src_fac,label_MainboardSoftwareversion);
-		label_PCBversion=lv_obj_create(Src_fac,label_MainboardSoftwareversion);
-		label_Comletedata=lv_obj_create(Src_fac,label_MainboardSoftwareversion);
-		lv_style_copy(&lv_style_src_fac,&lv_style_plain_color); // 将系统颜色参数复制给产测专用的
-		lv_obj_set_size(Src_fac,320,240);	
-		lv_style_src_fac.text.font=&my_font_icon_L;
-	}
-	lv_obj_set_style(Src_fac,&lv_style_src_fac);
 
+		//-----------------------------------设置产测专用对象Src_fac---------------------//
+		Src_fac=lv_obj_create(scr,NULL);  //设置一个工厂模式的专用对象，父对象为屏幕
+		lv_obj_set_size(Src_fac,320,240);	 //设置大小为整个屏幕
+		lv_style_copy(&lv_style_src_fac,&lv_style_plain_color); // 将系统颜色参数复制给产测专用的style
+		lv_style_src_fac.text.font=&my_font_icon_L; //设置字体为自己生成的小字体
+		lv_obj_set_style(Src_fac,&lv_style_src_fac); // 设置style.
+
+
+		label_MainboardSoftwareversion=lv_label_create(Src_fac,NULL);
+		lv_label_set_recolor(label_MainboardSoftwareversion,true); //使能重定义颜色
+		lv_label_set_style(label_MainboardSoftwareversion,LV_LABEL_STYLE_MAIN,&lv_style_src_fac);
+		lv_obj_set_size(label_MainboardSoftwareversion,100,100);
+		lv_obj_set_pos(label_MainboardSoftwareversion,10,10);
+		lv_label_set_long_mode(label_MainboardSoftwareversion,LV_LABEL_LONG_EXPAND); // 字符自己扩展
 	
+		label_Sensorsoftwareversion=lv_label_create(Src_fac,label_MainboardSoftwareversion);
+		label_PCBversion=lv_label_create(Src_fac,label_MainboardSoftwareversion);
+		label_Comletedata=lv_label_create(Src_fac,label_MainboardSoftwareversion);
+		lv_obj_set_pos(label_Sensorsoftwareversion,10,50);
+		lv_obj_set_pos(label_PCBversion,10,90);
+		lv_obj_set_pos(label_Comletedata,10,130);
+		
+		lv_label_set_static_text(label_MainboardSoftwareversion,MainBoardVer);
+		lv_label_set_text(label_Sensorsoftwareversion,CompleteData);
+		lv_label_set_static_text(label_PCBversion,"PCBVer");
+		lv_label_set_static_text(label_Comletedata,CompleteData);
+	}
+	
+	
+
 	switch (Sys.Factorysteps)
 	{
-	case /* constant-expression */0:
+	case 0:
 		/* code */
 		lv_style_src_fac.body.main_color = LV_COLOR_RED;
 		lv_style_src_fac.body.grad_color = LV_COLOR_RED;
 		break;
-	case /* constant-expression */1:
+	case 1:
 		/* code */
 		lv_style_src_fac.body.main_color = LV_COLOR_GREEN;
 		lv_style_src_fac.body.grad_color = LV_COLOR_GREEN;
 		break;
-	case /* constant-expression */2:
+	case 2:
 		/* code */
 		lv_style_src_fac.body.main_color = LV_COLOR_BLUE;
 		lv_style_src_fac.body.grad_color = LV_COLOR_BLUE;
+		break;
+	case 3:
+		/* code */
+		LED_Key_auto_on();
+		break;
+	case 4:
+		/* code */
+		LED_Key_sleep_on();
+		break;
+	case 5:
+		/* code */
+		LED_Key_speed_on();
+		break;
+	case 6:
+		/* code */
+		LED_Key_filter_on();
+		break;
+	case 7:
+		/* code */
+		LED_Key_power_on();
+		break;
+	case 8:
+		/* code */
+		LED_Key_timer_on();
 		break;
 	
 	default:
@@ -1614,9 +1655,6 @@ void fTimer_excution(void)
 	}
 
 }
-
-
-
 
 
 
@@ -3215,6 +3253,12 @@ void fLCD_reinit(void)
 4.增加一函数自检显示使用.(只完成一部分)
 5.还有滤网复位时候的透明变化未实现.
 
+2022.02.28
+1.继续完善自检部分的图形显示和功能. 未完成
+2.继续完善一些之前反馈的问题和已知的bug. 未完成
+3.宏定义添加花括号或者括号.
+4.小字体里面增加冒号的字体.
+5.按键参数调整，后续还需要继续优化.
 */
 void hal_entry(void)
 {
@@ -3237,7 +3281,10 @@ void hal_entry(void)
 		Lvgl.Taskcomplete = 0;
 		lv_task_handler(); // 任务处理器
 		Lvgl.Taskcomplete = 1;
-
+		if(Sys.Factoryflg)
+		{
+			Lvgl.Curpfunction = fFactory_process;
+		}
 		if(gTime100msflg)
 		{
 			gTime100msflg = 0;
@@ -3252,10 +3299,7 @@ void hal_entry(void)
 		{
 			gTime1sflg = 0;
 			fFilter_Cal();  //滤网寿命计算
-			if(Sys.Factoryflg)
-			{
-				Lvgl.Curpfunction = fFactory_process;
-			}
+			
 			// fLCD_reinit();
 		}
 	}

@@ -19,6 +19,11 @@
 */
 extern volatile bool g_transfer_complete;
 
+
+#define CompleteData "Data:2022.02.28"
+#define MainBoardVer "MainBoard Ver:0.0.1"
+#define PCBVer "PCB Ver:03"
+
 #define PM25LIB (1)
 typedef uint8_t u8;
 typedef uint16_t  u16;
@@ -82,67 +87,70 @@ typedef signed int  s32;
 
 #define TIMERCONFIRMCNT 30
 
-#define TEST_PINP100 R_PORT1->PODR_b.PODR0
-#define TFT_CS R_PORT1->PODR_b.PODR12
-#define TFT_WR  R_PORT1->PODR_b.PODR10
-#define TFT_RES R_PORT1->PODR_b.PODR13
-#define TFT_LED R_PORT5->PODR_b.PODR0
+#define TEST_PINP100 	R_PORT1->PODR_b.PODR0
+#define TFT_CS 			R_PORT1->PODR_b.PODR12
+#define TFT_WR  		R_PORT1->PODR_b.PODR10
+#define TFT_RES 		R_PORT1->PODR_b.PODR13
+#define TFT_LED 		R_PORT5->PODR_b.PODR0
 
-#define TFT_CLK R_PORT1->PODR_b.PODR11
+#define TFT_CLK 		R_PORT1->PODR_b.PODR11
 
-#define TFT_DATA R_PORT1->PODR_b.PODR9
+#define TFT_DATA 		R_PORT1->PODR_b.PODR9
 
-#define Buz_En() R_PORT4->PODR_b.PODR1=1
-#define Buz_Dis() R_PORT4->PODR_b.PODR1=0
-#define Buz_Beep()  {Sys.Buzcnt = 200;}
-
-#define LED_Key_auto_on() R_PORT0->PODR_b.PODR4=1
-#define LED_Key_auto_off() R_PORT0->PODR_b.PODR4=0
-
-#define LED_Key_filter_on() R_PORT0->PODR_b.PODR3=1
-#define LED_Key_filter_off() R_PORT0->PODR_b.PODR3=0
-
-#define LED_Key_sleep_on() R_PORT0->PODR_b.PODR1=1
-#define LED_Key_sleep_off() R_PORT0->PODR_b.PODR1=0
-
-#define LED_Key_speed_on() R_PORT4->PODR_b.PODR0=1
-#define LED_Key_speed_off() R_PORT4->PODR_b.PODR0=0
-
-#define LED_Key_power_on() R_PORT0->PODR_b.PODR2=1
-#define LED_Key_power_off() R_PORT0->PODR_b.PODR2=0
-
-#define LED_Key_timer_on() R_PORT0->PODR_b.PODR0=1
-#define LED_Key_timer_off() R_PORT0->PODR_b.PODR0=0
-
-#define  LED_key_all_on()  {R_PORT0->PODR|=0x1f;R_PORT4->PODR_b.PODR0=1;}
-#define  LED_key_all_off()	{R_PORT0->PODR&=~0x1f;R_PORT4->PODR_b.PODR0=0;}
-#define  LED_key_withoutpower_off()	{R_PORT0->PODR&=~0x1b;R_PORT4->PODR_b.PODR0=0;}
-
-#define  LED_RGB_RED_ON()  R_PORT1->PODR_b.PODR6=1
-#define  LED_RGB_RED_OFF()  R_PORT1->PODR_b.PODR6=0
+#define Buz_En() 		R_PORT4->PODR_b.PODR1=1
+#define Buz_Dis() 		R_PORT4->PODR_b.PODR1=0
+#define Buz_Beep()  	{Sys.Buzcnt = 200;}
 
 
-#define  LED_RGB_BLUE_ON()  R_PORT3->PODR_b.PODR4=1
-#define  LED_RGB_BLUE_OFF()  R_PORT3->PODR_b.PODR4=0
 
 
-#define  LED_RGB_GREEN_ON()  R_PORT3->PODR_b.PODR3=1
-#define  LED_RGB_GREEN_OFF()  R_PORT3->PODR_b.PODR3=0
 
 
 #define LED_RGB_ALLOFF() {LED_RGB_GREEN_OFF();LED_RGB_BLUE_OFF();LED_RGB_RED_OFF();}
 
 
-#define PWR_MOTOR_DIS()  R_PORT2->PODR_b.PODR8=0
-#define PWR_MOTOR_EN()  R_PORT2->PODR_b.PODR8=1
-#define Pin_CheckMotor   R_PORT2->PIDR_b.PIDR0
+#define LED_Key_auto_on() 	{R_PORT0->PODR_b.PODR4=1;}
+#define LED_Key_auto_off() 	{R_PORT0->PODR_b.PODR4=0;}
 
-#define PWR_WIFI_DIS() R_PORT0->PODR_b.PODR15=0
-#define PWR_WIFI_EN() R_PORT0->PODR_b.PODR15=1
+#define LED_Key_filter_on() {R_PORT0->PODR_b.PODR3=1;}
+#define LED_Key_filter_off(){R_PORT0->PODR_b.PODR3=0;}
 
-#define PWR_WIFI_RESETDIS() R_PORT0->PODR_b.PODR14=0
-#define PWR_WIFI_RESETEN() R_PORT0->PODR_b.PODR14=1
+#define LED_Key_sleep_on() 	{R_PORT0->PODR_b.PODR1=1;}
+#define LED_Key_sleep_off() {R_PORT0->PODR_b.PODR1=0;}
 
+#define LED_Key_speed_on() 	{R_PORT4->PODR_b.PODR0=1;}
+#define LED_Key_speed_off() {R_PORT4->PODR_b.PODR0=0;}
+
+#define LED_Key_power_on() 	{R_PORT0->PODR_b.PODR2=1;}
+#define LED_Key_power_off() {R_PORT0->PODR_b.PODR2=0;}
+
+#define LED_Key_timer_on() 	{R_PORT0->PODR_b.PODR0=1;}
+#define LED_Key_timer_off() {R_PORT0->PODR_b.PODR0=0;}
+
+#define  LED_key_all_on()  {R_PORT0->PODR|=0x1f;R_PORT4->PODR_b.PODR0=1;}
+#define  LED_key_all_off()	{R_PORT0->PODR&=~0x1f;R_PORT4->PODR_b.PODR0=0;}
+#define  LED_key_withoutpower_off()	{R_PORT0->PODR&=~0x1b;R_PORT4->PODR_b.PODR0=0;}
+#define LED_RGB_RED_ON()  	{R_PORT1->PODR_b.PODR6=1;}			
+#define LED_RGB_RED_OFF()  	{R_PORT1->PODR_b.PODR6=0;}
+
+
+#define LED_RGB_BLUE_ON()  	{R_PORT3->PODR_b.PODR4=1;}
+#define LED_RGB_BLUE_OFF()  {R_PORT3->PODR_b.PODR4=0;}
+
+
+#define LED_RGB_GREEN_ON()  {R_PORT3->PODR_b.PODR3=1;}
+#define LED_RGB_GREEN_OFF() {R_PORT3->PODR_b.PODR3=0;}
+#define PWR_MOTOR_DIS() 	{R_PORT2->PODR_b.PODR8=0;}
+#define PWR_MOTOR_EN()  	{R_PORT2->PODR_b.PODR8=1;}
+
+
+#define PWR_WIFI_DIS() 		{R_PORT0->PODR_b.PODR15=0;}
+#define PWR_WIFI_EN() 		{R_PORT0->PODR_b.PODR15=1;}
+
+#define PWR_WIFI_RESETDIS() {R_PORT0->PODR_b.PODR14=0;}
+#define PWR_WIFI_RESETEN() 	{R_PORT0->PODR_b.PODR14=1;}
+
+#define Pin_CheckMotor   	(R_PORT2->PIDR_b.PIDR0)
 #define SLEEP3S_CNT  3000
 #define comm_data_cnt 50
 

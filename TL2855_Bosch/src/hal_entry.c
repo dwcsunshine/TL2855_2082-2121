@@ -4,7 +4,7 @@
 #include "lv_tests\lv_test_theme\lv_test_theme_1.h"
 #include "lv_tests\lv_test_theme\lv_test_theme_2.h"
 #include "lv_tests\lv_test_theme\lv_test_theme_2.h"
-
+#include "hal_entry.h"
 bordecommdef boarduart;
 Sys_str	Sys;  // 系统标志位等等参数
 FG_DEF FG;
@@ -16,7 +16,8 @@ void Turn_On_Animation(void);
 void fFlashdata_read(void);
 void fFlashdata_deal(void);
 void fDeviceData_Init(void);
-
+void fTurn_off(void);
+void fTurn_on(void);
 
 Motor_str Motorpara=  //实际转速  计算方式 转速为频率的4倍 外设的频率 	是 48000000 应该是频率降低了1024倍分频 所以需要的速度 就是（46875*4）/250  放大10倍
 {
@@ -346,7 +347,7 @@ void Task_Pm25valuerefresh(u16 pm25value)
 		table_pm25[2] = 0x30+pm25value%10;
 		lv_label_set_array_text(label_pm25value,(const char*)&table_pm25[0],3);
 	}
-	pm25value = 14;
+
 	table_pm25[0] = 0x30+pm25value/100;
 	table_pm25[1] = 0x30+pm25value%100/10;
 	table_pm25[2] = 0x30+pm25value%10;
@@ -546,8 +547,8 @@ void Task_Sensordatacreate(void)
 		lv_obj_set_auto_realign (label_tvocvalue, true);
 		if(Sys.Warnup_Cnt<=300)  // 30S预热时间内显示
 		{
-			lv_label_set_array_text(label_tvocvalue,"---",3);
-			lv_label_set_array_text(label_pm25value,"---",3);
+			lv_label_set_array_text(label_tvocvalue,"- - -",5);
+			lv_label_set_array_text(label_pm25value,"- - -",5);
 		}
 		else
 		{
@@ -878,7 +879,7 @@ void Filter_display(void)  //滤网寿命显示
 	if(++Lvgl.Filtercnt>=3000)
 	{
 		Lvgl.Filtercnt = 0;
-		Lvgl.Curpfunction =Lvgl.Lastpfunction;
+		Lvgl.Curpfunction = Lvgl.Lastpfunction_InFilter;
 		// x1=lv_obj_get_x(obj_label_pic_filter);
 		// y1=lv_obj_get_y(obj_label_pic_filter);
 		// x2=lv_obj_get_x(obj_label_text_100percent);
@@ -1142,7 +1143,7 @@ void Filter_reset_animation(void)
 	if(++Lvgl.Filtercnt>5200 )
 	{
 		Lvgl.Filtercnt=0;
-		Lvgl.Curpfunction = Lvgl.Lastpfunction;
+		Lvgl.Curpfunction = Lvgl.Lastpfunction_InFilter;
 		lv_obj_refresh_style (scr);
 	}
 
@@ -1155,6 +1156,8 @@ void fFactory_process(void)  //产测模式
 	static lv_obj_t* label_PCBversion;  // PCB硬件版本
 	static lv_obj_t* label_Comletedata;  // 完成日期
 	static lv_style_t lv_style_src_fac; 
+	static u8 delay = 100;
+	Sys.power = 1;
 
 
 	if(Src_fac==NULL)	
@@ -1181,34 +1184,54 @@ void fFactory_process(void)  //产测模式
 		lv_obj_set_pos(label_Sensorsoftwareversion,10,50);
 		lv_obj_set_pos(label_PCBversion,10,90);
 		lv_obj_set_pos(label_Comletedata,10,130);
+		lv_style_src_fac.text.opa = 0;
 		
-		lv_label_set_static_text(label_MainboardSoftwareversion,MainBoardVer);
-		lv_label_set_text(label_Sensorsoftwareversion,CompleteData);
-		lv_label_set_static_text(label_PCBversion,"PCBVer");
-		lv_label_set_static_text(label_Comletedata,CompleteData);
 	}
 	
-	
-
+	LED_key_all_off();//关闭所有的按键灯
+	LED_RGB_ALLOFF(); //关闭所有的灯
+	if(Sys.Factorysteps >= 9)
+		LED_key_all_on();
 	switch (Sys.Factorysteps)
 	{
 	case 0:
 		/* code */
+		if(Sys.FactoryDelaycnt == 200)
+		{
+			Main_screen_clean();
+			lv_obj_refresh_style(scr);
+		}
+		
 		lv_style_src_fac.body.main_color = LV_COLOR_RED;
 		lv_style_src_fac.body.grad_color = LV_COLOR_RED;
+		LED_RGB_RED_ON();
 		break;
 	case 1:
 		/* code */
 		lv_style_src_fac.body.main_color = LV_COLOR_GREEN;
 		lv_style_src_fac.body.grad_color = LV_COLOR_GREEN;
+		LED_RGB_GREEN_ON();
 		break;
 	case 2:
 		/* code */
 		lv_style_src_fac.body.main_color = LV_COLOR_BLUE;
 		lv_style_src_fac.body.grad_color = LV_COLOR_BLUE;
+		LED_RGB_BLUE_ON();
 		break;
 	case 3:
 		/* code */
+	
+		if(Sys.FactoryDelaycnt == 200)
+		{
+			lv_style_src_fac.body.main_color = LV_COLOR_BLACK;
+			lv_style_src_fac.body.grad_color = LV_COLOR_BLACK;
+			lv_label_set_static_text(label_MainboardSoftwareversion,MainBoardVer);
+			lv_label_set_text(label_Sensorsoftwareversion,CompleteData);
+			lv_label_set_static_text(label_PCBversion,PCBVer);
+			lv_label_set_static_text(label_Comletedata,CompleteData);
+			lv_style_src_fac.text.opa = 255;
+		}
+		
 		LED_Key_auto_on();
 		break;
 	case 4:
@@ -1231,16 +1254,84 @@ void fFactory_process(void)  //产测模式
 		/* code */
 		LED_Key_timer_on();
 		break;
+	case 9:
+		/* code */
+		LED_key_all_on();
+		break;
+	case 10:  // 显示传感器信息
+		/* code */
+		lv_style_src_fac.text.opa = 0; //隐藏版本信息
+		if(Sys.FactoryDelaycnt == 200)
+		{
+			Task_Sensordatacreate();
+			if(label_humi==NULL)
+			{
+				label_humi = lv_label_create(scr,NULL); //创建一个标签
+				lv_label_set_long_mode (label_humi, LV_LABEL_LONG_EXPAND);
+				lv_obj_align(label_humi,scr,LV_ALIGN_IN_BOTTOM_MID,49,-10);
+				lv_label_set_align(label_humi,LV_ALIGN_IN_BOTTOM_MID);
+				lv_label_set_array_text(label_humi,(const char*)&table_humi,8);
+				lv_label_set_style(label_humi,LV_LABEL_STYLE_MAIN,&src1_style_Mainscreen);
+			}
+			if(label_temperature==NULL)
+			{
+				label_temperature = lv_label_create(scr,NULL); //创建一个标签
+				lv_label_set_long_mode (label_temperature, LV_LABEL_LONG_EXPAND);
+				lv_obj_align(label_temperature,scr,LV_ALIGN_IN_BOTTOM_LEFT,33,-10);
+				lv_label_set_align(label_temperature,LV_ALIGN_IN_BOTTOM_LEFT);
+				lv_label_set_array_text(label_temperature,(const char*)&table_temp,8);
+				lv_label_set_style(label_temperature,LV_LABEL_STYLE_MAIN,&src1_style_Mainscreen);
+			}
+			
+			lv_obj_set_parent(label_pm25,Src_fac);
+			lv_obj_set_parent(label_tvoc,Src_fac);
+			lv_obj_set_parent(label_pm25value,Src_fac);
+			lv_obj_set_parent(label_tvocvalue,Src_fac);
+			lv_obj_set_parent(label_humi,Src_fac);
+			lv_obj_set_parent(label_temperature,Src_fac);
+			Main_screen_display();
+			Task_Temprefresh (Sys.Tempvalue);
+			Task_Humirefresh(Sys.Humivalue);
+			Task_Tvocvalurefresh (Sys.tvocvalue);
+			Task_Pm25valuerefresh(Sys.pm25value);
+		}
+		Sys.Factorysteps = 11;
+		break;
+	case 11:  // 显示传感器信息
+		/* code */
+		lv_style_src_fac.text.opa = 0; //隐藏版本信息
+		if(++delay>=20)
+		{
+			delay = 0;
+			Main_screen_display();
+			Task_Temprefresh (Sys.Tempvalue);
+			Task_Humirefresh(Sys.Humivalue);
+			Task_Tvocvalurefresh (Sys.tvocvalue);
+			Task_Pm25valuerefresh(Sys.pm25value);
+		}
+		break;
+	case 12:
+		/* code */
+		lv_obj_set_parent(label_pm25,scr);
+		lv_obj_set_parent(label_tvoc,scr);
+		lv_obj_set_parent(label_pm25value,scr);
+		lv_obj_set_parent(label_tvocvalue,scr);
+		lv_obj_set_parent(label_humi,scr);
+		lv_obj_set_parent(label_temperature,scr);
+		fTurn_off();
+		Sys.Factorysteps = 0;
+		Sys.FactoryDelaycnt = 200;
+		Sys.Factoryflg = 0;
+		return;
+		break;
 	
 	default:
 		break;
 	}
-	
-	
-	
-	
-	
-	Sys.Factoryflg = 1; // 产测模式
+	if(Sys.FactoryDelaycnt)
+		Sys.FactoryDelaycnt--;
+	lv_obj_refresh_style(Src_fac);
+
 
 }
 
@@ -1866,8 +1957,7 @@ void fBuz_Driver(void)  //蜂鸣器驱动 1MS一次
 
 void fTurn_on(void)
 {
-//	Sys.power =1;
-	Sys.flowcnt = Flowon;
+	Sys.power =1;
 }
 
 void fTurn_off(void)
@@ -1878,7 +1968,6 @@ void fTurn_off(void)
 		Lvgl.Curpfunction=Turn_On_Animation;
 	}
 	Lvgl.cnt = 0;
-	Sys.flowcnt = Flowoff;
 	Main_screen_clean();
 	img_style_sleep.image.opa = 0;
 	if(Sys.Warnup_Cnt<=300)
@@ -2060,6 +2149,8 @@ void fKey_Process(void) //T =6ms
 	u16 dat = 0;
 	fKey_GetValue();
 
+	
+
 	if(Sys.Timer.settingflg && KeyValue==KEY_TIMER && (KeyStatus&KEY_Release)==0) //定时时候防止进入不了连续调整
 	{
 		Sys.Timer.setcnt=0;
@@ -2071,6 +2162,211 @@ void fKey_Process(void) //T =6ms
 		KeyStatus &= ~KEY_Available; //键值失效
 
 		dat = KeyValue;
+		if(Sys.Factoryflg)
+		{
+			if(Sys.FactoryDelaycnt != 0)
+				dat = 0;
+			switch(dat)
+			{
+				case KEY_AUTO:  // 自动模式
+					if(KeyStatus & KEY_ShortPress)
+					{
+						KeyStatus&=~KEY_ShortPress;
+
+						if(Sys.Factorysteps<3)
+						{
+							Sys.FactoryDelaycnt = 200;
+							Sys.Factorysteps++;
+						}
+							
+						else
+						{
+							if(Sys.Factorysteps==3)
+							{
+								Sys.Factorysteps = 4;
+								Sys.FactoryDelaycnt = 200;
+							}
+							if(Sys.Factorysteps == 9)
+							{
+								Sys.Factorysteps = 10;
+								Sys.FactoryDelaycnt = 200;
+							}
+						}	
+												
+					}
+				
+					if(KeyStatus&KEY_LongOnce)
+					{
+						KeyStatus &=~KEY_LongOnce;
+					}
+					break;
+				case KEY_SLEEP:	//模式按键
+					if(KeyStatus & KEY_ShortPress)
+					{
+						KeyStatus&=~KEY_ShortPress;
+						if(Sys.Factorysteps<3)
+						{
+							Sys.FactoryDelaycnt = 200;
+							Sys.Factorysteps++;
+						}
+							
+						else
+						{
+							if(Sys.Factorysteps==4)
+							{
+								Sys.Factorysteps = 5;
+								Sys.FactoryDelaycnt = 200;
+							}
+							if(Sys.Factorysteps == 9)
+							{
+								Sys.Factorysteps = 10;
+								Sys.FactoryDelaycnt = 200;
+							}
+						}
+						
+					}
+
+					if(KeyStatus&KEY_LongOnce)
+					{
+						KeyStatus &=~KEY_LongOnce;
+					}
+					break;
+				case KEY_SPEED:  // 风速调整
+					if(KeyStatus & KEY_ShortPress)
+					{
+						KeyStatus&=~KEY_ShortPress;
+						if(Sys.Factorysteps<3)
+						{
+							Sys.FactoryDelaycnt = 200;
+							Sys.Factorysteps++;
+						}
+							
+						else
+						{
+							if(Sys.Factorysteps==5)
+							{
+								Sys.Factorysteps = 6;
+								Sys.FactoryDelaycnt = 200;
+							}
+							if(Sys.Factorysteps == 9)
+							{
+								Sys.Factorysteps = 10;
+								Sys.FactoryDelaycnt = 200;
+							}
+						}
+						
+					}
+					if(KeyStatus&KEY_LongOnce)
+					{
+						KeyStatus &=~KEY_LongOnce;
+					}
+					break;
+				case KEY_FILTER:  // 灯光按键 滤网按键
+					if(KeyStatus & KEY_ShortPress)
+					{
+						KeyStatus&=~KEY_ShortPress;
+						if(Sys.Factorysteps<3)
+						{
+							Sys.FactoryDelaycnt = 200;
+							Sys.Factorysteps++;
+						}
+							
+						else
+						{
+							if(Sys.Factorysteps==6)
+							{
+								Sys.Factorysteps = 7;
+								Sys.FactoryDelaycnt = 200;
+							}
+							if(Sys.Factorysteps == 9)
+							{
+								Sys.Factorysteps = 10;
+								Sys.FactoryDelaycnt = 200;
+							}
+						}
+						
+					}
+
+					if(KeyStatus&KEY_LongOnce)
+					{
+						KeyStatus &=~KEY_LongOnce;
+						if(Sys.Factorysteps<3)
+							Sys.Factorysteps++;
+						
+					}
+					break;
+				case KEY_POWER:  //开关按键
+					if(KeyStatus & KEY_ShortPress) //短按只会执行一次
+					{
+						KeyStatus&=~KEY_ShortPress;
+						if(Sys.Factorysteps<3)
+						{
+							Sys.FactoryDelaycnt = 200;
+							Sys.Factorysteps++;
+						}
+							
+						else
+						{
+							if(Sys.Factorysteps==7)
+							{
+								Sys.Factorysteps = 8;
+								Sys.FactoryDelaycnt = 200;
+							}
+							if(Sys.Factorysteps == 9)
+							{
+								Sys.Factorysteps = 10;
+								Sys.FactoryDelaycnt = 200;
+							}
+						}
+						
+					}
+
+					if(KeyStatus&KEY_LongOnce)
+					{
+						KeyStatus &=~KEY_LongOnce;
+					
+					}
+					break;
+				
+				
+				
+				case KEY_TIMER:  // 定时按键
+					if(KeyStatus & KEY_ShortPress)
+					{
+						KeyStatus&=~KEY_ShortPress;
+						if(Sys.Factorysteps<3)
+						{
+							Sys.FactoryDelaycnt = 200;
+							Sys.Factorysteps++;
+						}
+							
+						else
+						{
+							if(Sys.Factorysteps==8)
+							{
+								Sys.Factorysteps = 9;
+								Sys.FactoryDelaycnt = 200;
+							}
+							if(Sys.Factorysteps == 9)
+							{
+								Sys.Factorysteps = 10;
+								Sys.FactoryDelaycnt = 200;
+							}
+						}
+						
+					}
+					if(KeyStatus&KEY_LongPress)
+					{
+						KeyStatus &=~KEY_LongPress;
+					}
+					break;
+				
+				default	:
+					break;
+			}
+			return;
+		}
+	
 		if(Sys.power)
 		{
 			if(Sys.opmode==emodeSleep)
@@ -2178,7 +2474,7 @@ void fKey_Process(void) //T =6ms
 				KeyStatus&=~KEY_ShortPress;
 				if((Lvgl.Curpfunction != Filter_display) && (Lvgl.Curpfunction != Filter_reset_animation))
 				{
-					Lvgl.Lastpfunction = Lvgl.Curpfunction;
+					Lvgl.Lastpfunction_InFilter = Lvgl.Curpfunction;
 					Lvgl.Filtercnt = 0;
 					Lvgl.Curpfunction = Filter_display;
 				}
@@ -2191,7 +2487,7 @@ void fKey_Process(void) //T =6ms
 
 				if((Lvgl.Curpfunction != Filter_reset_animation) &&(Lvgl.Curpfunction != Filter_display))
 				{
-					Lvgl.Lastpfunction = Lvgl.Curpfunction;
+					Lvgl.Lastpfunction_InFilter = Lvgl.Curpfunction;
 					Lvgl.Filtercnt = 0;
 					Lvgl.Curpfunction = Filter_reset_animation;
 				}
@@ -2253,9 +2549,13 @@ void fKey_Process(void) //T =6ms
 					}
 					else
 					{
-						Sys.Speed.gear++;
-						if(Sys.Speed.gear>espd5)
-							Sys.Speed.gear = espd1;
+						if(Sys.Errcode|(ERR_FAN|ERR_Filterlock))
+						{
+							Sys.Speed.gear++;
+							if(Sys.Speed.gear>espd5)
+								Sys.Speed.gear = espd1;
+							Sys.Speed.gearreal = Sys.Speed.gear;
+						}
 					}
 					Buz_Beep ();
 				}
@@ -2527,7 +2827,7 @@ void fMotor_ctrl(void)
 	u32 *p = 0;
 	p = &Motorpara.Spd_Off;
 	static u16 sErr_30s=0;
-	if(Sys.Errcode&(bit0|bit7))  //风机故障 或者 锁机的情况下
+	if(Sys.Errcode&(ERR_COMM|ERR_FAN|ERR_HALL|ERR_Filterlock))  //风机故障 或者 锁机的情况下
 	{
 		PWR_MOTOR_DIS();
 		Motorpara.Spd_Output[0] = Motorpara.Spd_Off[0];
@@ -2541,13 +2841,13 @@ void fMotor_ctrl(void)
 				Sys.delaycnt = 10;
 				PWR_MOTOR_EN();
 			}
-			if(Sys.Speed.FeedBack<100)  //连续5S风速反馈小于100  报风机故障
+			if(Sys.Speed.FeedBack<100 || abs(Sys.Speed.Target- Sys.Speed.FeedBack)>=50)  //产测下10S，正常30S风速反馈小于100 或者风速差大于50 报风机故障
 			{
 				sErr_30s++;
-				if(sErr_30s>=300)
+				if(sErr_30s>=(Sys.Factoryflg!=0?100:300))
 				{
 					sErr_30s = 300;
-					Sys.Errcode |=0x01;  // 5S之内没达到100转
+					Sys.Errcode |=0x01;  // 5S之内没达到100转 风机故障
 				}
 			}
 			else   // 风速正常 计数清除
@@ -2568,7 +2868,6 @@ void fMotor_ctrl(void)
 					{
 					case 0:
 						Motorpara.Spd_Output[0] = tAuto_Spd[0];
-
 						break;
 					case 1:
 						Motorpara.Spd_Output[0] = tAuto_Spd[1];
@@ -2622,6 +2921,8 @@ void fMotor_ctrl(void)
 				break;
 
 			}
+			if(Sys.Factoryflg)  //产测模式下 风速为低风
+				Motorpara.Spd_Output[0] = tAuto_Spd[0];
 		}
 		else
 		{
@@ -2706,7 +3007,9 @@ void fDisp_LedDriver(void) // LED驱动控制 125us
 	static u16 sBreath_dutyset=0;
 	static u8 sBreath_dutycnt=0;
 	volatile u16 sBreath_dutytmp = 0;
-	if(Sys.power||Sys.flowcnt<=Flowon)
+	if(Sys.Factoryflg)  // 产测模式下不执行
+		return;
+	if(Sys.power)
 	{
 		if(Sys.opmode == emodeSleep)
 		{
@@ -2852,7 +3155,7 @@ void fDisp_LedDriver(void) // LED驱动控制 125us
 //	gAQIduty_Bluetmp = gAQIduty_Bluetmp/100;
 //	gAQIduty_Redtmp = gAQIduty_Redtmp*85;
 //	gAQIduty_Redtmp = gAQIduty_Redtmp/100;  // 亮度全部降低为原先的85%
-	if(Sys.power == 0 || Sys.AQI_DISABLE ||Sys.opmode==emodeSleep||Sys.flowcnt>0)  //工厂产测模 或者AQI关 或者睡眠模式下LED全部关闭
+	if(Sys.power == 0 || Sys.AQI_DISABLE ||Sys.opmode==emodeSleep)  //工厂产测模 或者AQI关 或者睡眠模式下LED全部关闭
 	{
 		LED_RGB_ALLOFF();
 		return;
@@ -3105,7 +3408,7 @@ void fDeviceData_Init(void)
 	Sys.Filter.calcnt = 0;
 	Sys.comm.confirmcnt = 4;
 	Sys.Sleep3S_Cnt = SLEEP3S_CNT;
-	Sys.flowcnt = Flowoff;
+	
 }
 
 
@@ -3259,6 +3562,12 @@ void fLCD_reinit(void)
 3.宏定义添加花括号或者括号.
 4.小字体里面增加冒号的字体.
 5.按键参数调整，后续还需要继续优化.
+
+
+2022.03.01
+1.修复了先把之前开机动画时候进入滤网复位 一直重复开机动画的bug
+2.修复了风速档位最多显示4档的问题
+3.现在开机时候，LED等等和灯不需要延时开启，同时开.
 */
 void hal_entry(void)
 {
@@ -3276,15 +3585,17 @@ void hal_entry(void)
 	R_GPT_Start (&g_timer1_ctrl);
 	R_GPT_Start (&g_timer0_125us_ctrl);
 	__enable_irq();
+	
+	#ifdef TEST
+	fFactory_process();
+	#endif
+
 	while(1)
 	{
 		Lvgl.Taskcomplete = 0;
 		lv_task_handler(); // 任务处理器
 		Lvgl.Taskcomplete = 1;
-		if(Sys.Factoryflg)
-		{
-			Lvgl.Curpfunction = fFactory_process;
-		}
+	
 		if(gTime100msflg)
 		{
 			gTime100msflg = 0;
@@ -3325,7 +3636,10 @@ void Timer1_1ms_callback (timer_callback_args_t * p_args)
 
 	if(Lvgl.Initcomplete==1) //初始化结束
 	{
-		(*Lvgl.Curpfunction)();
+		if(Sys.Factoryflg)
+			fFactory_process();
+		else
+			(*Lvgl.Curpfunction)();
 	}
 
 	fKey_Process();  // 按键处理函数  键值获取大概需要5ms 时间
@@ -3362,10 +3676,7 @@ void Timer1_1ms_callback (timer_callback_args_t * p_args)
 			Sys.Plugin_Cnt++;
 		fTimer_excution(); //定时执行 100MS
 		fDustlevel_cal();
-		if(Sys.flowcnt<=Flowon&&Sys.flowcnt>0)
-			Sys.flowcnt--;
-		if(Sys.flowcnt==Flow_turnonTFT&&Sys.power==0)
-			Sys.power = 1;
+
 
 	}
 
@@ -3385,7 +3696,7 @@ void Timer1_1ms_callback (timer_callback_args_t * p_args)
 	if(sT1mscnt>=8000)
 		sT1mscnt = 0;
 	fBuz_Driver(); //蜂鸣器
-	fBoard_Sensorcommflow();
+	fBoard_Sensorcommflow(); // 主从板通讯处理
 
 }
 

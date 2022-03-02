@@ -5,6 +5,8 @@
     "lv_test_theme_1.h": "c",
     "lv_test_theme_2.h": "c",
     "r_transfer_api.h": "c",
-    "r_spi.h": "c"
+    "r_spi.h": "c",
+    "lvgl.h": "c",
+    "renesas.h": "c"
   }
 }

@@ -24,6 +24,8 @@ extern volatile bool g_transfer_complete;
 #define MainBoardVer "MainBoard Ver:0.0.1"
 #define PCBVer "PCB Ver:03"
 
+
+
 #define PM25LIB (1)
 typedef uint8_t u8;
 typedef uint16_t  u16;
@@ -53,6 +55,13 @@ typedef signed int  s32;
 #define bit14 0x4000
 #define bit15 0x8000
 
+#define ERR_FAN bit0
+#define ERR_HALL bit1
+#define ERR_COMM bit2
+#define ERR_PM25 bit3
+#define ERR_TVOC bit4
+#define ERR_HUMI bit5
+#define ERR_Filterlock bit7
 
 #define BigtoLittle32(A)   ((( (u32)(A) & 0xff000000) >> 24) | \
                                          (( (u32)(A) & 0x00ff0000) >> 8)   | \
@@ -164,6 +173,7 @@ typedef struct lvglamo
 {
 	void (*Curpfunction)(); //当前函数指针 指向当前运行的函数
 	void (*Lastpfunction)(); //函数上一个指针，指向之前运行的函数
+	void (*Lastpfunction_InFilter)(); //滤网复位或者滤网状态下，指针缓存，指向之前运行的函数
 	u16 cnt; // 动画计数
 	u16 Filtercnt; //滤网技术
 	u8 Initcomplete;
@@ -280,6 +290,7 @@ typedef struct
 	u8 Factoryflg;    //长按电源和灯 组合键 15S进入	响2声
 	u8 Factorysteps;  //工厂模式测试步骤
 	u8 FilterTestFlg;   //长按组合按键 开关机和模式键 15S进入 响2声
+	u16 FactoryDelaycnt; // 工厂模式下的延迟技术
 	u16 Sleep3S_Cnt; //3S计数
 	u8 eLight20S_Cnt; // 20s计数
 	u16 Plugin_Cnt;  //上电时间计数

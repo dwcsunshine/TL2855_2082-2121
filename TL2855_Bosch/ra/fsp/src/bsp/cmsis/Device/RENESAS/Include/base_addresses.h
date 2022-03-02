@@ -340,7 +340,7 @@
  #define R_PORT1_BASE                  0x40040020
  #define R_PORT2_BASE                  0x40040040
  #define R_PORT3_BASE                  0x40040060
- #define R_PORT4_BASE                  0x40040080
+ #define xR_PORT4_BASE                  0x40040080
  #define R_PORT5_BASE                  0x400400A0
  #define R_PORT6_BASE                  0x400400C0
  #define R_PORT7_BASE                  0x400400E0

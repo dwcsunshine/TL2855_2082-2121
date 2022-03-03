@@ -139,20 +139,20 @@ const touch_button_cfg_t g_qe_touch_button_cfg_config01[] =
     /* power */
     {
         .elem_index = 2,
-        .threshold  = 1213,
-        .hysteresis = 60,
+        .threshold  = 1500,
+        .hysteresis = 75,
     },
     /* sleep */
     {
         .elem_index = 3,
-        .threshold  = 1021,
-        .hysteresis = 51,
+        .threshold  = 1320,
+        .hysteresis = 65,
     },
     /* timer */
     {
         .elem_index = 4,
-        .threshold  = 1056,
-        .hysteresis = 52,
+        .threshold  = 1350,
+        .hysteresis = 67,
     },
     /* speed */
     {

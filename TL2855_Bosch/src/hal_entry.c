@@ -18,6 +18,8 @@ void fFlashdata_deal(void);
 void fDeviceData_Init(void);
 void fTurn_off(void);
 void fTurn_on(void);
+void Normal_Display(void);
+void sleep_screen(void);
 
 Motor_str Motorpara=  //实际转速  计算方式 转速为频率的4倍 外设的频率 	是 48000000 应该是频率降低了1024倍分频 所以需要的速度 就是（46875*4）/250  放大10倍
 {
@@ -123,7 +125,7 @@ char  table_tvoc[3]= {'L','0','0'};
 char  table_filterpercent[15]= {'#','5','E','B','D','8','2',' ',0x31,0x30,0x30,0xee,0x98,0x84,'#'};
 char  const table_100percent[4]= {0xee,0x98,0x84,'#'};
 char  const table_100percentdispgreen[15]= {'#','5','E','B','D','8','2',' ',0x31,0x30,0x30,0xee,0x98,0x84,'#'}; //5EBD82 绿色
-
+char  table_SensorsoftwareVer[20]={0};
 
 u8 tim1ms_flg = 0;
 static u16 Animation_cnt = 0;
@@ -326,27 +328,30 @@ void Task_Tvocvalurefresh(u16 tvocvalue)
 
 void Task_Pm25valuerefresh(u16 pm25value)
 {
+	if(pm25value>499)
+		pm25value = 499;  // 防止显示超出界限
+	else if(pm25value == 0)
+		pm25value = 1; //至少显示1
+	// if(pm25value<10)
+	// {
+	// 	table_pm25[0] = 0x30+pm25value;
+	// 	lv_label_set_array_text(label_pm25value,(const char*)&table_pm25[0],1);
 
-	if(pm25value<10)
-	{
-		table_pm25[0] = 0x30+pm25value;
-		lv_label_set_array_text(label_pm25value,(const char*)&table_pm25[0],1);
+	// }
+	// else if(pm25value<100)
+	// {
+	// 	table_pm25[0] = 0x30+pm25value/10;
+	// 	table_pm25[1] = 0x30+pm25value%10;
+	// 	lv_label_set_array_text(label_pm25value,(const char*)&table_pm25[0],2);
 
-	}
-	else if(pm25value<100)
-	{
-		table_pm25[0] = 0x30+pm25value/10;
-		table_pm25[1] = 0x30+pm25value%10;
-		lv_label_set_array_text(label_pm25value,(const char*)&table_pm25[0],2);
-
-	}
-	else
-	{
-		table_pm25[0] = 0x30+pm25value/100;
-		table_pm25[1] = 0x30+pm25value%100/10;
-		table_pm25[2] = 0x30+pm25value%10;
-		lv_label_set_array_text(label_pm25value,(const char*)&table_pm25[0],3);
-	}
+	// }
+	// else
+	// {
+	// 	table_pm25[0] = 0x30+pm25value/100;
+	// 	table_pm25[1] = 0x30+pm25value%100/10;
+	// 	table_pm25[2] = 0x30+pm25value%10;
+	// 	lv_label_set_array_text(label_pm25value,(const char*)&table_pm25[0],3);
+	// }
 
 	table_pm25[0] = 0x30+pm25value/100;
 	table_pm25[1] = 0x30+pm25value%100/10;
@@ -414,8 +419,8 @@ void Task_Fanrefresh(espd fanspd)
 
 void Task_Humirefresh(u8 Humi)
 {
-	if(Humi>99)
-		Humi = 99;
+	if(Humi>95)
+		Humi = 95;
 	if(Humi>=10)
 	{
 		table_humi[3] = Humi/10+0x30;
@@ -444,6 +449,8 @@ void Task_Temprefresh(signed char temp)
 {
 	if(temp>99)
 		temp = 99;
+	if(temp<-20)
+		temp = -20;
 	if(temp>10)
 	{
 		table_temp[3] = temp/10+0x30;
@@ -735,6 +742,30 @@ void Filter_display(void)  //滤网寿命显示
 	}
 	if(Lvgl.Filtercnt == 0)
 	{
+		if(Lvgl.Lastpfunction == Normal_Display)
+		{
+			src1_style_Mainscreen_Bigstyle.text.opa = 20;
+			src1_style_Mainscreen_Bigstyle.image.opa = 0;
+			src1_style_Mainscreen_Bigstyle.line.opa = 0;
+
+			src1_style_Mainscreen.text.opa = 20;
+			src1_style_Mainscreen.image.opa = 20;
+			src1_style_Mainscreen.line.opa = 20;
+
+			src1_style_Mainscreen_Littlestyle.text.opa = 20;
+			src1_style_Mainscreen_Littlestyle.image.opa = 20;
+			src1_style_Mainscreen_Littlestyle.line.opa = 20;
+		}
+		else if(Lvgl.Lastpfunction==sleep_screen)   //睡眠模式显示界面
+		{
+			img_style_sleep.image.opa =20;
+		}
+		if(Sys.Wifitimeoutcnt)
+			src1_style_Mainscreen_Wifi.text.opa = 20;
+		if(Sys.childlock)
+			src1_style_Mainscreen_Lock.text.opa = 20;
+		if(Sys.Timer.setflg)
+			src1_style_Mainscreen_Timer.text.opa = 20;
 		lv_style_copy(&bar1_style_bg,&lv_style_plain_color);
 		lv_style_copy(&bar1_style_indic,&lv_style_plain_color);
 		lv_style_copy(&Label_style_text_filterstatus,&lv_style_plain_color);
@@ -878,6 +909,16 @@ void Filter_display(void)  //滤网寿命显示
 	
 	if(++Lvgl.Filtercnt>=3000)
 	{
+		if(Lvgl.Lastpfunction==Normal_Display) //正常模式显示界面
+			Main_screen_display();
+		else if(Lvgl.Lastpfunction==sleep_screen)   //睡眠模式显示界面
+			img_style_sleep.image.opa = 255;
+		if(Sys.Wifitimeoutcnt)
+			src1_style_Mainscreen_Wifi.text.opa = 255;
+		if(Sys.childlock)
+			src1_style_Mainscreen_Lock.text.opa = 255;
+		if(Sys.Timer.setflg)
+			src1_style_Mainscreen_Timer.text.opa = 255;
 		Lvgl.Filtercnt = 0;
 		Lvgl.Curpfunction = Lvgl.Lastpfunction_InFilter;
 		// x1=lv_obj_get_x(obj_label_pic_filter);
@@ -907,7 +948,81 @@ void Filter_reset_animation(void)
 	static lv_style_t bar1_style_indic;
 	static  short offsetx  = 75;
 	static  short offsety  = 76;
-	if(Lvgl.Filtercnt == 400)
+	
+	
+	if(Lvgl.Filtercnt == 0 )
+	{
+		if(Lvgl.Lastpfunction==Normal_Display) //正常模式显示界面
+			Main_screen_display();
+		else if(Lvgl.Lastpfunction==sleep_screen)   //睡眠模式显示界面
+			img_style_sleep.image.opa = 255;
+		if(Sys.Wifitimeoutcnt)
+			src1_style_Mainscreen_Wifi.text.opa = 255;
+		if(Sys.childlock)
+			src1_style_Mainscreen_Lock.text.opa = 255;
+		if(Sys.Timer.setflg)
+			src1_style_Mainscreen_Timer.text.opa = 255;
+
+	}
+	
+	if(Lvgl.Filtercnt%40==0 && Lvgl.Filtercnt<800) //20帧
+	{
+		if(Lvgl.Lastpfunction == Normal_Display)
+		{
+			src1_style_Mainscreen_Bigstyle.text.opa -= 11;
+			src1_style_Mainscreen_Bigstyle.image.opa -= 10; //线条
+			src1_style_Mainscreen_Bigstyle.line.opa -= 5; //图画条 需要变为完全透明
+
+			src1_style_Mainscreen.text.opa -= 11;
+			src1_style_Mainscreen.image.opa -= 11;
+			src1_style_Mainscreen.line.opa -= 11;
+
+			src1_style_Mainscreen_Littlestyle.text.opa -= 11;
+			src1_style_Mainscreen_Littlestyle.image.opa -= 11;
+			src1_style_Mainscreen_Littlestyle.line.opa -= 11;
+			
+		}
+		else if(Lvgl.Lastpfunction==sleep_screen)   //睡眠模式显示界面
+		{
+			img_style_sleep.image.opa -=11;
+		}
+		if(Sys.Wifitimeoutcnt)
+			src1_style_Mainscreen_Wifi.text.opa -= 11;
+		if(Sys.childlock)
+			src1_style_Mainscreen_Lock.text.opa -= 11;
+		if(Sys.Timer.setflg)
+			src1_style_Mainscreen_Timer.text.opa -=  11;
+
+		if(Lvgl.Filtercnt == 760)
+		{
+			if(Lvgl.Lastpfunction == Normal_Display)
+			{
+				src1_style_Mainscreen_Bigstyle.text.opa = 20;
+				src1_style_Mainscreen_Bigstyle.image.opa = 0;
+				src1_style_Mainscreen_Bigstyle.line.opa = 0;
+
+				src1_style_Mainscreen.text.opa = 20;
+				src1_style_Mainscreen.image.opa = 20;
+				src1_style_Mainscreen.line.opa = 20;
+
+				src1_style_Mainscreen_Littlestyle.text.opa = 20;
+				src1_style_Mainscreen_Littlestyle.image.opa = 20;
+				src1_style_Mainscreen_Littlestyle.line.opa = 20;
+			}
+			else if(Lvgl.Lastpfunction==sleep_screen)   //睡眠模式显示界面
+			{
+				img_style_sleep.image.opa =20;
+			}
+			if(Sys.Wifitimeoutcnt)
+				src1_style_Mainscreen_Wifi.text.opa = 20;
+			if(Sys.childlock)
+				src1_style_Mainscreen_Lock.text.opa = 20;
+			if(Sys.Timer.setflg)
+				src1_style_Mainscreen_Timer.text.opa = 20;
+		}
+		
+	}
+	if(Lvgl.Filtercnt == 800)
 	{
 		offsetx  = 75;
 		offsety  = 76;
@@ -942,7 +1057,7 @@ void Filter_reset_animation(void)
 		lv_cont_set_layout(cont1,LV_LAYOUT_OFF);
 		cont1_style_main.body.main_color = LV_COLOR_BLACK;
 		cont1_style_main.body.grad_color = LV_COLOR_BLACK;
-		cont1_style_main.body.border.opa = 60;  //
+		cont1_style_main.body.border.opa = 10;  //
 
 //-------------------------------------------OK图标--------------------------------------//
 		lv_label_set_recolor (obj_label_pic_OK,true);
@@ -1044,14 +1159,17 @@ void Filter_reset_animation(void)
 
 	}
 //
-
-	if(Lvgl.Filtercnt%20 == 0 && Lvgl.Filtercnt<400) // 20帧
+	if(Lvgl.Filtercnt%40 == 0 && Lvgl.Filtercnt<=800) // 20帧
 	{
 		lv_obj_refresh_style (scr);
 	}
-	else if(Lvgl.Filtercnt%20 == 0 && Lvgl.Filtercnt<=600)
+	else if(Lvgl.Filtercnt%20 == 0 && Lvgl.Filtercnt<1200) // 20帧
 	{
-		cont1_style_main.body.border.opa+=10;
+		lv_obj_refresh_style (scr);
+		cont1_style_main.body.border.opa+=5;
+	}
+	else if(Lvgl.Filtercnt%20 == 0 && Lvgl.Filtercnt<=1600) // 证书
+	{
 		lv_obj_refresh_style (scr);
 	}
 	else if(Lvgl.Filtercnt%20 == 0 && Lvgl.Filtercnt<=2200)
@@ -1072,10 +1190,10 @@ void Filter_reset_animation(void)
 	}
 	else if(Lvgl.Filtercnt%20 == 0 && Lvgl.Filtercnt<=2600) // 0.4S 20帧
 	{
-		Label_style_pic_OK.text.opa -=12;
-		Label_style_pic_filter.text.opa+=12;
-		bar1_style_bg.body.opa += 12;
-		bar1_style_indic.body.opa += 12;
+		Label_style_pic_OK.text.opa -=11;
+		Label_style_pic_filter.text.opa+=11;
+		bar1_style_bg.body.opa += 11;
+		bar1_style_indic.body.opa += 11;
 		if(Lvgl.Filtercnt==2600)
 		{
 			Label_style_pic_OK.text.opa =0;
@@ -1130,8 +1248,33 @@ void Filter_reset_animation(void)
 		bar1_style_indic.body.opa-=12;
 		Label_style_pic_filter.text.opa-=12;
 		cont1_style_main.body.opa -=12;
-		cont1_style_main.body.border.opa-=8;
+		cont1_style_main.body.border.opa-=5;
 		lv_obj_refresh_style (scr);
+		
+		if(Lvgl.Lastpfunction == Normal_Display)
+		{
+			src1_style_Mainscreen_Bigstyle.text.opa += 10;
+			src1_style_Mainscreen_Bigstyle.image.opa += 10;
+			src1_style_Mainscreen_Bigstyle.line.opa += 5;
+
+			src1_style_Mainscreen.text.opa += 10;
+			src1_style_Mainscreen.image.opa += 10;
+			src1_style_Mainscreen.line.opa += 10;
+
+			src1_style_Mainscreen_Littlestyle.text.opa += 10;
+			src1_style_Mainscreen_Littlestyle.image.opa += 10;
+			src1_style_Mainscreen_Littlestyle.line.opa += 10;
+		}
+		else if(Lvgl.Lastpfunction==sleep_screen)   //睡眠模式显示界面
+		{
+			img_style_sleep.image.opa +=10;
+		}
+		if(Sys.Wifitimeoutcnt)
+			src1_style_Mainscreen_Wifi.text.opa += 10;
+		if(Sys.childlock)
+			src1_style_Mainscreen_Lock.text.opa +=10;
+		if(Sys.Timer.setflg)
+			src1_style_Mainscreen_Timer.text.opa +=10;
 
 	}
 	else if(Lvgl.Filtercnt%20 == 0 && Lvgl.Filtercnt<=5300) // 0.8S 20帧
@@ -1142,10 +1285,45 @@ void Filter_reset_animation(void)
 
 	if(++Lvgl.Filtercnt>5200 )
 	{
-		Lvgl.Filtercnt=0;
-		Lvgl.Curpfunction = Lvgl.Lastpfunction_InFilter;
+		Lvgl.Filtercnt=5201;
+		if(Lvgl.Lastpfunction == Normal_Display)
+		{
+			Main_screen_display();
+		}
+		else if(Lvgl.Lastpfunction==sleep_screen)   //睡眠模式显示界面
+		{
+			img_style_sleep.image.opa =255;
+		}
+		if(Sys.Wifitimeoutcnt)
+			src1_style_Mainscreen_Wifi.text.opa = 255;
+		if(Sys.childlock)
+			src1_style_Mainscreen_Lock.text.opa =255;
+		if(Sys.Timer.setflg)
+			src1_style_Mainscreen_Timer.text.opa =255;
+		// Lvgl.Filtercnt=0;
+		// Lvgl.Curpfunction = Lvgl.Lastpfunction_InFilter;
 		lv_obj_refresh_style (scr);
 	}
+	// if(++Lvgl.Filtercnt>5200 )
+	// {
+	// 	if(Lvgl.Lastpfunction == Normal_Display)
+	// 	{
+	// 		Main_screen_display();
+	// 	}
+	// 	else if(Lvgl.Lastpfunction==sleep_screen)   //睡眠模式显示界面
+	// 	{
+	// 		img_style_sleep.image.opa =255;
+	// 	}
+	// 	if(Sys.Wifitimeoutcnt)
+	// 		src1_style_Mainscreen_Wifi.text.opa = 255;
+	// 	if(Sys.childlock)
+	// 		src1_style_Mainscreen_Lock.text.opa =255;
+	// 	if(Sys.Timer.setflg)
+	// 		src1_style_Mainscreen_Timer.text.opa =255;
+	// 	Lvgl.Filtercnt=0;
+	// 	Lvgl.Curpfunction = Lvgl.Lastpfunction_InFilter;
+	// 	lv_obj_refresh_style (scr);
+	// }
 
 }
 void fFactory_process(void)  //产测模式
@@ -1174,7 +1352,7 @@ void fFactory_process(void)  //产测模式
 		label_MainboardSoftwareversion=lv_label_create(Src_fac,NULL);
 		lv_label_set_recolor(label_MainboardSoftwareversion,true); //使能重定义颜色
 		lv_label_set_style(label_MainboardSoftwareversion,LV_LABEL_STYLE_MAIN,&lv_style_src_fac);
-		lv_obj_set_size(label_MainboardSoftwareversion,100,100);
+		lv_obj_set_size(label_MainboardSoftwareversion,100,200);
 		lv_obj_set_pos(label_MainboardSoftwareversion,10,10);
 		lv_label_set_long_mode(label_MainboardSoftwareversion,LV_LABEL_LONG_EXPAND); // 字符自己扩展
 	
@@ -1190,8 +1368,7 @@ void fFactory_process(void)  //产测模式
 	
 	LED_key_all_off();//关闭所有的按键灯
 	LED_RGB_ALLOFF(); //关闭所有的灯
-	if(Sys.Factorysteps >= 9)
-		LED_key_all_on();
+		
 	switch (Sys.Factorysteps)
 	{
 	case 0:
@@ -1226,7 +1403,10 @@ void fFactory_process(void)  //产测模式
 			lv_style_src_fac.body.main_color = LV_COLOR_BLACK;
 			lv_style_src_fac.body.grad_color = LV_COLOR_BLACK;
 			lv_label_set_static_text(label_MainboardSoftwareversion,MainBoardVer);
-			lv_label_set_text(label_Sensorsoftwareversion,CompleteData);
+			strcpy(&table_SensorsoftwareVer[0],"Sensor Ver:");
+			table_SensorsoftwareVer[11] = 0x30+(Sys.softwareversion >>4);
+			table_SensorsoftwareVer[12] = 0x30+(Sys.softwareversion &0x0f);
+			lv_label_set_array_text(label_Sensorsoftwareversion,&table_SensorsoftwareVer[0],13);
 			lv_label_set_static_text(label_PCBversion,PCBVer);
 			lv_label_set_static_text(label_Comletedata,CompleteData);
 			lv_style_src_fac.text.opa = 255;
@@ -1260,6 +1440,7 @@ void fFactory_process(void)  //产测模式
 		break;
 	case 10:  // 显示传感器信息
 		/* code */
+		LED_key_all_on();
 		lv_style_src_fac.text.opa = 0; //隐藏版本信息
 		if(Sys.FactoryDelaycnt == 200)
 		{
@@ -1299,6 +1480,7 @@ void fFactory_process(void)  //产测模式
 		break;
 	case 11:  // 显示传感器信息
 		/* code */
+		LED_Key_power_on();
 		lv_style_src_fac.text.opa = 0; //隐藏版本信息
 		if(++delay>=20)
 		{
@@ -1310,7 +1492,7 @@ void fFactory_process(void)  //产测模式
 			Task_Pm25valuerefresh(Sys.pm25value);
 		}
 		break;
-	case 12:
+	case 12:  //退出自检的流程. 
 		/* code */
 		lv_obj_set_parent(label_pm25,scr);
 		lv_obj_set_parent(label_tvoc,scr);
@@ -1571,7 +1753,7 @@ void Turn_On_Animation(void)
 			}
 			lv_img_set_style(obj_img_bosch, LV_IMG_STYLE_MAIN, &src1_style_Mainscreen);
 			lv_img_set_src (obj_img_bosch, &bosch);
-			lv_obj_set_pos (obj_img_bosch,80,93);
+			lv_obj_set_pos (obj_img_bosch,45,94);
 			src1_style_Mainscreen.image.opa=0;
 		}
 		else if(Lvgl.cnt == 3000)
@@ -1987,6 +2169,14 @@ void fLogic_ctrl(void)  //常用的一些逻辑判断  10MS loop
 	}
 	else
 		TFT_LED = 0;
+
+	if(++Sys.comm.timeoutcnt>=(Sys.Factoryflg!=0?2000:6000))
+	{
+		Sys.comm.timeoutcnt = 6000;
+		Sys.Errcode |= ERR_COMM;
+	}
+	else
+		Sys.Errcode &= ~ERR_COMM;
 }
 void fKey_GetValue(void)  //获取键值并处理
 {
@@ -2142,6 +2332,19 @@ void fKey_GetValue(void)  //获取键值并处理
 
 }
 
+void fFactory_getinto(void)
+{
+	Sys.Factorysteps = 0;
+	Sys.FactoryDelaycnt = 200;
+	Sys.Factoryflg = 1;  // 进入自检
+}
+
+void fFactory_getout(void) //退出自检
+{
+	Sys.Factorysteps = 12;
+	Sys.FactoryDelaycnt = 200;
+	Sys.Factoryflg = 1;  // 
+}
 
 
 void fKey_Process(void) //T =6ms
@@ -2317,6 +2520,11 @@ void fKey_Process(void) //T =6ms
 								Sys.Factorysteps = 10;
 								Sys.FactoryDelaycnt = 200;
 							}
+
+							if(Sys.Errcode==0 && Sys.Factorysteps==11)
+							{
+								fFactory_getout(); //退出自检
+							}
 						}
 						
 					}
@@ -2384,7 +2592,7 @@ void fKey_Process(void) //T =6ms
 		}
 		else
 		{
-			if(dat!=KEY_POWER)
+			if(dat!=KEY_POWER&&dat!=KEY_FACTORY)
 			{
 				if(KeyStatus & KEY_ShortPress)
 					KeyStatus&=~KEY_ShortPress;
@@ -2401,6 +2609,23 @@ void fKey_Process(void) //T =6ms
 
 		switch(dat)
 		{
+			case KEY_FACTORY:  //自检按键
+				if(KeyStatus & KEY_ShortPress) //短按只会执行一次
+				{
+					KeyStatus&=~KEY_ShortPress;
+				}
+
+				if(KeyStatus&KEY_LongOnce)
+				{
+					KeyStatus &=~KEY_LongOnce;
+					if(Sys.Plugin_Cnt<=300)
+					{
+						fFactory_getinto(); //进入自检
+						Buz_Beep ();
+					}
+					
+				}
+				break;
 		case KEY_POWER:  //开关按键
 			if(KeyStatus & KEY_ShortPress) //短按只会执行一次
 			{
@@ -2472,7 +2697,7 @@ void fKey_Process(void) //T =6ms
 			if(KeyStatus & KEY_ShortPress)
 			{
 				KeyStatus&=~KEY_ShortPress;
-				if((Lvgl.Curpfunction != Filter_display) && (Lvgl.Curpfunction != Filter_reset_animation))
+				if((Lvgl.Curpfunction != Filter_display) && (Lvgl.Curpfunction != Filter_reset_animation)&&(Lvgl.Curpfunction != Turn_On_Animation))
 				{
 					Lvgl.Lastpfunction_InFilter = Lvgl.Curpfunction;
 					Lvgl.Filtercnt = 0;
@@ -2485,7 +2710,7 @@ void fKey_Process(void) //T =6ms
 			{
 				KeyStatus &=~KEY_LongOnce;
 
-				if((Lvgl.Curpfunction != Filter_reset_animation) &&(Lvgl.Curpfunction != Filter_display))
+				if((Lvgl.Curpfunction != Filter_reset_animation) &&(Lvgl.Curpfunction != Filter_display)&&(Lvgl.Curpfunction != Turn_On_Animation))
 				{
 					Lvgl.Lastpfunction_InFilter = Lvgl.Curpfunction;
 					Lvgl.Filtercnt = 0;
@@ -2692,25 +2917,29 @@ void fBoard_Sensordatahandle(void)
 	i = Sys.comm.rxdata[2];
 	if(Sys.comm.rxdata[0]==0x5f && Sys.comm.rxdata[1]==0x50 && Sys.comm.rxdata[i-1]==Sys.comm.rxdatasum)
 	{
+		Sys.comm.timeoutcnt = 0;
 		if(Sys.comm.rxdata[4]&bit5)
-			Sys.Errcode |=bit5;
+			Sys.Errcode |=ERR_HUMI;
 		else
-			Sys.Errcode &=~bit5;
+			Sys.Errcode &=~ERR_HUMI;
 
+		// if(Sys.comm.rxdata[4]&bit4)
+		// 	Sys.Errcode |=ERR_COMM;
+		
 		if(Sys.comm.rxdata[4]&bit2)
-			Sys.Errcode |=bit2;
+			Sys.Errcode |=ERR_TVOC;
 		else
-			Sys.Errcode &=~bit2;
+			Sys.Errcode &=~ERR_TVOC;
 
 		if(Sys.comm.rxdata[4]&bit3)
-			Sys.Errcode |=bit3;
+			Sys.Errcode |=ERR_PM25;
 		else
-			Sys.Errcode &=~bit3;
+			Sys.Errcode &=~ERR_PM25;
 
 		if(Sys.comm.rxdata[4]&bit0)
-			Sys.Errcode |=bit7;
+			Sys.Errcode |=ERR_HALL;
 		else
-			Sys.Errcode &=~bit7;
+			Sys.Errcode &=~ERR_HALL;
 
 		Sys.softwareversion = Sys.comm.rxdata[5];
 		Sys.pm25softwareversion = Sys.comm.rxdata[6];
@@ -2767,6 +2996,7 @@ void fBoard_Sensorcommflow(void) // 2ms
 		R_SCI_UART_Write (&g_uart_sensor_ctrl,&Sys.comm.txdata[0],6);
 		Sys.comm.rxindex = 0;
 		Sys.comm.steps = 1;
+		
 		break;
 	case 1:
 		if(++Sys.comm.rxcnt>=150)
@@ -2827,6 +3057,7 @@ void fMotor_ctrl(void)
 	u32 *p = 0;
 	p = &Motorpara.Spd_Off;
 	static u16 sErr_30s=0;
+	static u16 sErr_30s_1=0;
 	if(Sys.Errcode&(ERR_COMM|ERR_FAN|ERR_HALL|ERR_Filterlock))  //风机故障 或者 锁机的情况下
 	{
 		PWR_MOTOR_DIS();
@@ -2841,7 +3072,7 @@ void fMotor_ctrl(void)
 				Sys.delaycnt = 10;
 				PWR_MOTOR_EN();
 			}
-			if(Sys.Speed.FeedBack<100 || abs(Sys.Speed.Target- Sys.Speed.FeedBack)>=50)  //产测下10S，正常30S风速反馈小于100 或者风速差大于50 报风机故障
+			if(Sys.Speed.FeedBack<100 )  //产测下10S，正常30S风速反馈小于100 
 			{
 				sErr_30s++;
 				if(sErr_30s>=(Sys.Factoryflg!=0?100:300))
@@ -2852,6 +3083,18 @@ void fMotor_ctrl(void)
 			}
 			else   // 风速正常 计数清除
 				sErr_30s = 0;
+
+			if(abs(Sys.Speed.Target- Sys.Speed.FeedBack)>=50 && Sys.Speed.Target!= 0)  //产测下30S，正常50S 或者风速差大于50 报风机故障
+			{
+				sErr_30s_1++;
+				if(sErr_30s_1>=(Sys.Factoryflg!=0?300:500))
+				{
+					sErr_30s_1 = 500;
+					Sys.Errcode |=0x01;  // 5S之内没达到100转 风机故障
+				}
+			}
+			else   // 风速正常 计数清除
+				sErr_30s_1 = 0;
 
 			switch (Sys.opmode)
 			{
@@ -3568,6 +3811,14 @@ void fLCD_reinit(void)
 1.修复了先把之前开机动画时候进入滤网复位 一直重复开机动画的bug
 2.修复了风速档位最多显示4档的问题
 3.现在开机时候，LED等等和灯不需要延时开启，同时开.
+
+2022.03.03
+1.继续完善自检. OK 基本完成 可以送样
+2.修复PM25数值显示超出的问题，同步修改了一些显示传感器 数据的显示范围.
+3.增加滤网复位和滤网显示的时候的透明显示.
+4.上电默认霍尔断开。通讯成功实际检测霍尔之后才会正常判断.
+5.Bosch图标重做.现在图标变为230*51大小.
+6.自检里面显示软件版本信息.更新软件完成日期。
 */
 void hal_entry(void)
 {
@@ -3585,9 +3836,11 @@ void hal_entry(void)
 	R_GPT_Start (&g_timer1_ctrl);
 	R_GPT_Start (&g_timer0_125us_ctrl);
 	__enable_irq();
+	Sys.Errcode |= ERR_HALL; // 上电默认霍尔关闭 只有通讯成功的情况下 霍尔才能正常
 	
 	#ifdef TEST
 	fFactory_process();
+	fKey_Process();
 	#endif
 
 	while(1)

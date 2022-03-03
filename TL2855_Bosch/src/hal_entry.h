@@ -20,7 +20,7 @@
 extern volatile bool g_transfer_complete;
 
 
-#define CompleteData "Data:2022.02.28"
+#define CompleteData "Data:2022.03.03"
 #define MainBoardVer "MainBoard Ver:0.0.1"
 #define PCBVer "PCB Ver:03"
 
@@ -57,10 +57,11 @@ typedef signed int  s32;
 
 #define ERR_FAN bit0
 #define ERR_HALL bit1
-#define ERR_COMM bit2
+#define ERR_COMM bit2 // 从机报的通讯故障
 #define ERR_PM25 bit3
 #define ERR_TVOC bit4
 #define ERR_HUMI bit5
+#define ERR_COMM1 bit6 //主机报的通讯故障
 #define ERR_Filterlock bit7
 
 #define BigtoLittle32(A)   ((( (u32)(A) & 0xff000000) >> 24) | \
@@ -78,7 +79,7 @@ typedef signed int  s32;
 #define KEY_SLEEP 0X08
 #define KEY_FILTER 0X02
 #define KEY_TIMER 0X10
-
+#define KEY_FACTORY (KEY_SPEED|KEY_AUTO)
 
 
 
@@ -306,6 +307,7 @@ typedef struct
 	SPEED_DEF Speed;
 	struct
 	{
+		u16 timeoutcnt; //通讯超时
 		u8 confirmcnt; //确认通讯成功计数  必须连续通讯4次才能显示 正常温湿度 不然显示0
 		u8 steps;
 		u8 rxindex; //接收索引

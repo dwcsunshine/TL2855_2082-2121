@@ -62,7 +62,7 @@ Macro definitions
 #define TOUCH_CFG_NUM_WHEELS     (0)
 #define TOUCH_CFG_PAD_ENABLE     (0)
 
-#define CTSU_CFG_VCC_MV           (3300)
+#define CTSU_CFG_VCC_MV           (3200)
 #define CTSU_CFG_LOW_VOLTAGE_MODE (0)
 
 #define CTSU_CFG_PCLK_DIVISION (1)
@@ -77,17 +77,17 @@ Macro definitions
 /***********************************************************************************************************************
 Button State Mask for each configuration.
 ***********************************************************************************************************************/
-#define CONFIG01_INDEX_K1_AUTO     (0)
-#define CONFIG01_MASK_K1_AUTO      (1ULL << CONFIG01_INDEX_K1_AUTO)
-#define CONFIG01_INDEX_K2_FL     (1)
-#define CONFIG01_MASK_K2_FL      (1ULL << CONFIG01_INDEX_K2_FL)
-#define CONFIG01_INDEX_K3_ONOFF     (2)
-#define CONFIG01_MASK_K3_ONOFF      (1ULL << CONFIG01_INDEX_K3_ONOFF)
-#define CONFIG01_INDEX_K4_SLEEP     (3)
-#define CONFIG01_MASK_K4_SLEEP      (1ULL << CONFIG01_INDEX_K4_SLEEP)
-#define CONFIG01_INDEX_K5_TIMER     (4)
-#define CONFIG01_MASK_K5_TIMER      (1ULL << CONFIG01_INDEX_K5_TIMER)
-#define CONFIG01_INDEX_K6_SPEED     (5)
-#define CONFIG01_MASK_K6_SPEED      (1ULL << CONFIG01_INDEX_K6_SPEED)
+#define CONFIG01_INDEX_AUTO     (0)
+#define CONFIG01_MASK_AUTO      (1ULL << CONFIG01_INDEX_AUTO)
+#define CONFIG01_INDEX_FILTER     (1)
+#define CONFIG01_MASK_FILTER      (1ULL << CONFIG01_INDEX_FILTER)
+#define CONFIG01_INDEX_POWER     (2)
+#define CONFIG01_MASK_POWER      (1ULL << CONFIG01_INDEX_POWER)
+#define CONFIG01_INDEX_SLEEP     (3)
+#define CONFIG01_MASK_SLEEP      (1ULL << CONFIG01_INDEX_SLEEP)
+#define CONFIG01_INDEX_TIMER     (4)
+#define CONFIG01_MASK_TIMER      (1ULL << CONFIG01_INDEX_TIMER)
+#define CONFIG01_INDEX_SPEED     (5)
+#define CONFIG01_MASK_SPEED      (1ULL << CONFIG01_INDEX_SPEED)
 
 #endif /* QE_TOUCH_DEFINE_H */

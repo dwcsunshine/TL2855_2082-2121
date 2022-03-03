@@ -52,12 +52,12 @@ CTSU Related Information for [CONFIG01] configuration.
 
 const ctsu_element_cfg_t g_qe_ctsu_element_cfg_config01[] =
 {
-    { .ssdiv = CTSU_SSDIV_2000, .so = 0x07D, .snum = 0x07, .sdpa = 0x03 },
-    { .ssdiv = CTSU_SSDIV_2000, .so = 0x07C, .snum = 0x07, .sdpa = 0x03 },
-    { .ssdiv = CTSU_SSDIV_2000, .so = 0x07F, .snum = 0x07, .sdpa = 0x03 },
-    { .ssdiv = CTSU_SSDIV_2000, .so = 0x075, .snum = 0x07, .sdpa = 0x03 },
-    { .ssdiv = CTSU_SSDIV_2000, .so = 0x08E, .snum = 0x07, .sdpa = 0x03 },
-    { .ssdiv = CTSU_SSDIV_2000, .so = 0x08F, .snum = 0x07, .sdpa = 0x03 },
+    { .ssdiv = CTSU_SSDIV_1330, .so = 0x02F, .snum = 0x03, .sdpa = 0x06 },
+    { .ssdiv = CTSU_SSDIV_1330, .so = 0x02F, .snum = 0x03, .sdpa = 0x06 },
+    { .ssdiv = CTSU_SSDIV_1330, .so = 0x034, .snum = 0x03, .sdpa = 0x06 },
+    { .ssdiv = CTSU_SSDIV_1330, .so = 0x02F, .snum = 0x03, .sdpa = 0x06 },
+    { .ssdiv = CTSU_SSDIV_1330, .so = 0x03F, .snum = 0x03, .sdpa = 0x06 },
+    { .ssdiv = CTSU_SSDIV_1330, .so = 0x03D, .snum = 0x03, .sdpa = 0x06 },
 };
 
 const ctsu_cfg_t g_qe_ctsu_cfg_config01 =
@@ -127,38 +127,38 @@ const touch_button_cfg_t g_qe_touch_button_cfg_config01[] =
     /* auto */
     {
         .elem_index = 0,
-        .threshold  = 1441,
-        .hysteresis = 72,
+        .threshold  = 427,
+        .hysteresis = 21,
     },
     /* filter */
     {
         .elem_index = 1,
-        .threshold  = 1384,
-        .hysteresis = 69,
+        .threshold  = 478,
+        .hysteresis = 23,
     },
     /* power */
     {
         .elem_index = 2,
-        .threshold  = 1500,
-        .hysteresis = 75,
+        .threshold  = 412,
+        .hysteresis = 20,
     },
     /* sleep */
     {
         .elem_index = 3,
-        .threshold  = 1320,
-        .hysteresis = 65,
+        .threshold  = 324,
+        .hysteresis = 16,
     },
     /* timer */
     {
         .elem_index = 4,
-        .threshold  = 1350,
-        .hysteresis = 67,
+        .threshold  = 418,
+        .hysteresis = 20,
     },
     /* speed */
     {
         .elem_index = 5,
-        .threshold  = 1020,
-        .hysteresis = 51,
+        .threshold  = 354,
+        .hysteresis = 17,
     },
 };
 #endif

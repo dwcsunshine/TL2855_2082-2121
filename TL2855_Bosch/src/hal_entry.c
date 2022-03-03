@@ -2159,6 +2159,12 @@ void fTurn_off(void)
 
 void fLogic_ctrl(void)  //常用的一些逻辑判断  10MS loop
 {
+	if(Sys.Errcode&ERR_HALL)
+	{
+		if(Sys.power)
+			fTurn_off();
+	}
+
 	if(Sys.power)
 	{
 		TFT_LED = 1;
@@ -2189,6 +2195,8 @@ void fKey_GetValue(void)  //获取键值并处理
 	if(g_qe_touch_flag==0)
 	{
 		keyTemp = button_status;
+		if(Sys.Errcode&ERR_HALL)
+			keyTemp = 0;
 		switch (status)
 		{
 		case 0:										//扫描按键 检测是否有按下
@@ -3476,6 +3484,11 @@ void fDisp_Init(void)
 }
 void  Sys_Init(void) //系统初始化函数
 {
+	uint32_t volatile  tmp1,tmp2;
+	u16 volatile i;
+	u8 volatile times= 0;
+	u8 volatile Keytemp = 0;
+	u8 volatile Keytime = 0;
 	TFT_CS = 1;
 	TFT_RES = 1;
 	TFT_LED = 0;
@@ -3531,6 +3544,68 @@ void  Sys_Init(void) //系统初始化函数
 	g_spi0_ctrl.p_regs->SPCMD[0] = 0xe780;
 	g_spi0_ctrl.p_regs->SPCR_b.SPE = 1; // SPI功能打开
 
+	for(Keytime=0;Keytime<4;Keytime++)  //最多检测4次 可以初始化4次最多
+	{
+		qe_touch_Init();  // 按键初始化
+		delay(0xff);
+		for (i = 0; i < 600; i++)  // 按键设置
+		{
+			// R_WDT_Refresh(&g_wdt_ctrl); //WDT 刷新
+			Keytemp = qe_getvalueInit();
+			if(Keytemp != 0 &&i >250)  // 检测到有按键按下    可以判断为误动作  重新初始化 至少要检测0.5S
+			{
+				break;
+			}
+		}
+		if(Keytemp == 0)  //前面按键都正常
+		{
+			for(i=0; i<TOUCH_CFG_NUM_BUTTONS; i++)
+			{
+				tmp1+= g_touch_button_reference[i];
+			}
+			for(i=0; i<TOUCH_CFG_NUM_BUTTONS; i++)
+			{
+				tmp2+= g_touch_button_countvalue[i];
+			}
+			if(tmp1<(12000*TOUCH_CFG_NUM_BUTTONS) || tmp2<(12000*TOUCH_CFG_NUM_BUTTONS)) //只要按键基准值或者检测值不正常 就重新初始化按键
+			{
+				qe_touch_Init();
+			}	
+			else
+			{
+				for(times = 0; times < 3; times++) //比较基准和按键情况
+				{
+					if((abs(g_touch_button_countvalue[times]-g_touch_button_reference[times]))>=280 && g_touch_button_countvalue[times]>g_touch_button_reference[times])
+					{
+						times = 4; // 如果值在认定的错误区间，直接退出
+						break;
+					}
+				}
+
+				if(times!=4) //上面值错误，需要进行初始化
+				{
+					break; //上面值出来都没啥问题  可以直接退出4次初始化大循环
+				}
+				
+			}
+		}
+
+		
+	}
+	
+	
+	
+
+	for (i = 0; i < 600; i++)  // 按键设置 稳定阶段 这个也是一个保险
+	{
+		// R_WDT_Refresh(&g_wdt_ctrl); //WDT 刷新
+		Keytemp=qe_getvalueInit();
+		if(Keytemp!=0 && i>400) // 至少要保持0.8S
+		{
+			qe_touch_Init();// 初始化
+			break;
+		}
+	}
 
 
 }
@@ -3819,6 +3894,8 @@ void fLCD_reinit(void)
 4.上电默认霍尔断开。通讯成功实际检测霍尔之后才会正常判断.
 5.Bosch图标重做.现在图标变为230*51大小.
 6.自检里面显示软件版本信息.更新软件完成日期。
+7.门控开关未检测到无法开机，并且处于关机状态。
+8.重新采样按键值，初始化按键和2837一样。
 */
 void hal_entry(void)
 {

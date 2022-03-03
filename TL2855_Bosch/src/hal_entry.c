@@ -1334,7 +1334,7 @@ void fFactory_process(void)  //产测模式
 	static lv_obj_t* label_PCBversion;  // PCB硬件版本
 	static lv_obj_t* label_Comletedata;  // 完成日期
 	static lv_style_t lv_style_src_fac; 
-	static u8 delay = 100;
+	static u8 delay = 0;
 	Sys.power = 1;
 
 
@@ -1373,7 +1373,7 @@ void fFactory_process(void)  //产测模式
 	{
 	case 0:
 		/* code */
-		if(Sys.FactoryDelaycnt == 200)
+		if(Sys.FactoryDelaycnt == 500)
 		{
 			Main_screen_clean();
 			lv_obj_refresh_style(scr);
@@ -1398,51 +1398,59 @@ void fFactory_process(void)  //产测模式
 	case 3:
 		/* code */
 	
-		if(Sys.FactoryDelaycnt == 200)
+		if(Sys.FactoryDelaycnt == 500)
 		{
 			lv_style_src_fac.body.main_color = LV_COLOR_BLACK;
 			lv_style_src_fac.body.grad_color = LV_COLOR_BLACK;
 			lv_label_set_static_text(label_MainboardSoftwareversion,MainBoardVer);
 			strcpy(&table_SensorsoftwareVer[0],"Sensor Ver:");
 			table_SensorsoftwareVer[11] = 0x30+(Sys.softwareversion >>4);
-			table_SensorsoftwareVer[12] = 0x30+(Sys.softwareversion &0x0f);
-			lv_label_set_array_text(label_Sensorsoftwareversion,&table_SensorsoftwareVer[0],13);
+			table_SensorsoftwareVer[12] = '.';
+			table_SensorsoftwareVer[13] = 0x30+(Sys.softwareversion &0x0f);
+			lv_label_set_array_text(label_Sensorsoftwareversion,&table_SensorsoftwareVer[0],14);
 			lv_label_set_static_text(label_PCBversion,PCBVer);
 			lv_label_set_static_text(label_Comletedata,CompleteData);
 			lv_style_src_fac.text.opa = 255;
 		}
 		
-		LED_Key_auto_on();
+		
 		break;
 	case 4:
 		/* code */
-		LED_Key_sleep_on();
+		LED_Key_auto_on();
+		
 		break;
 	case 5:
 		/* code */
-		LED_Key_speed_on();
+		LED_Key_sleep_on();
+		LED_Key_auto_on();
 		break;
 	case 6:
 		/* code */
-		LED_Key_filter_on();
+		LED_Key_sleep_on();
+		LED_Key_auto_on();
+		LED_Key_speed_on();
 		break;
 	case 7:
 		/* code */
-		LED_Key_power_on();
+		LED_Key_sleep_on();
+		LED_Key_auto_on();
+		LED_Key_speed_on();
+		LED_Key_filter_on();
 		break;
 	case 8:
 		/* code */
-		LED_Key_timer_on();
+		LED_Key_sleep_on();
+		LED_Key_auto_on();
+		LED_Key_speed_on();
+		LED_Key_filter_on();
+		LED_Key_power_on();
 		break;
 	case 9:
 		/* code */
 		LED_key_all_on();
-		break;
-	case 10:  // 显示传感器信息
-		/* code */
-		LED_key_all_on();
 		lv_style_src_fac.text.opa = 0; //隐藏版本信息
-		if(Sys.FactoryDelaycnt == 200)
+		if(Sys.FactoryDelaycnt == 500)
 		{
 			Task_Sensordatacreate();
 			if(label_humi==NULL)
@@ -1476,21 +1484,17 @@ void fFactory_process(void)  //产测模式
 			Task_Tvocvalurefresh (Sys.tvocvalue);
 			Task_Pm25valuerefresh(Sys.pm25value);
 		}
+		break;
+	case 10:  // 显示传感器信息
+		/* code */
+		
+		LED_key_all_on();
 		Sys.Factorysteps = 11;
 		break;
 	case 11:  // 显示传感器信息
 		/* code */
 		LED_Key_power_on();
 		lv_style_src_fac.text.opa = 0; //隐藏版本信息
-		if(++delay>=20)
-		{
-			delay = 0;
-			Main_screen_display();
-			Task_Temprefresh (Sys.Tempvalue);
-			Task_Humirefresh(Sys.Humivalue);
-			Task_Tvocvalurefresh (Sys.tvocvalue);
-			Task_Pm25valuerefresh(Sys.pm25value);
-		}
 		break;
 	case 12:  //退出自检的流程. 
 		/* code */
@@ -1502,7 +1506,7 @@ void fFactory_process(void)  //产测模式
 		lv_obj_set_parent(label_temperature,scr);
 		fTurn_off();
 		Sys.Factorysteps = 0;
-		Sys.FactoryDelaycnt = 200;
+		Sys.FactoryDelaycnt = 500;
 		Sys.Factoryflg = 0;
 		return;
 		break;
@@ -1512,6 +1516,18 @@ void fFactory_process(void)  //产测模式
 	}
 	if(Sys.FactoryDelaycnt)
 		Sys.FactoryDelaycnt--;
+	if(Sys.Factorysteps>=9) //自检到了显示PM25那一步
+	{
+		if(++delay>=20)
+		{
+			delay = 0;
+			Main_screen_display();
+			Task_Temprefresh (Sys.Tempvalue);
+			Task_Humirefresh(Sys.Humivalue);
+			Task_Tvocvalurefresh (Sys.tvocvalue);
+			Task_Pm25valuerefresh(Sys.pm25value);
+		}
+	}
 	lv_obj_refresh_style(Src_fac);
 
 
@@ -2343,14 +2359,14 @@ void fKey_GetValue(void)  //获取键值并处理
 void fFactory_getinto(void)
 {
 	Sys.Factorysteps = 0;
-	Sys.FactoryDelaycnt = 200;
+	Sys.FactoryDelaycnt = 500;
 	Sys.Factoryflg = 1;  // 进入自检
 }
 
 void fFactory_getout(void) //退出自检
 {
 	Sys.Factorysteps = 12;
-	Sys.FactoryDelaycnt = 200;
+	Sys.FactoryDelaycnt = 500;
 	Sys.Factoryflg = 1;  // 
 }
 
@@ -2386,7 +2402,7 @@ void fKey_Process(void) //T =6ms
 
 						if(Sys.Factorysteps<3)
 						{
-							Sys.FactoryDelaycnt = 200;
+							Sys.FactoryDelaycnt = 500;
 							Sys.Factorysteps++;
 						}
 							
@@ -2395,12 +2411,12 @@ void fKey_Process(void) //T =6ms
 							if(Sys.Factorysteps==3)
 							{
 								Sys.Factorysteps = 4;
-								Sys.FactoryDelaycnt = 200;
+								Sys.FactoryDelaycnt = 500;
 							}
-							if(Sys.Factorysteps == 9)
+							else if(Sys.Factorysteps == 9)
 							{
 								Sys.Factorysteps = 10;
-								Sys.FactoryDelaycnt = 200;
+								Sys.FactoryDelaycnt = 500;
 							}
 						}	
 												
@@ -2417,7 +2433,7 @@ void fKey_Process(void) //T =6ms
 						KeyStatus&=~KEY_ShortPress;
 						if(Sys.Factorysteps<3)
 						{
-							Sys.FactoryDelaycnt = 200;
+							Sys.FactoryDelaycnt = 500;
 							Sys.Factorysteps++;
 						}
 							
@@ -2426,12 +2442,12 @@ void fKey_Process(void) //T =6ms
 							if(Sys.Factorysteps==4)
 							{
 								Sys.Factorysteps = 5;
-								Sys.FactoryDelaycnt = 200;
+								Sys.FactoryDelaycnt = 500;
 							}
-							if(Sys.Factorysteps == 9)
+							else if(Sys.Factorysteps == 9)
 							{
 								Sys.Factorysteps = 10;
-								Sys.FactoryDelaycnt = 200;
+								Sys.FactoryDelaycnt = 500;
 							}
 						}
 						
@@ -2448,7 +2464,7 @@ void fKey_Process(void) //T =6ms
 						KeyStatus&=~KEY_ShortPress;
 						if(Sys.Factorysteps<3)
 						{
-							Sys.FactoryDelaycnt = 200;
+							Sys.FactoryDelaycnt = 500;
 							Sys.Factorysteps++;
 						}
 							
@@ -2457,12 +2473,12 @@ void fKey_Process(void) //T =6ms
 							if(Sys.Factorysteps==5)
 							{
 								Sys.Factorysteps = 6;
-								Sys.FactoryDelaycnt = 200;
+								Sys.FactoryDelaycnt = 500;
 							}
-							if(Sys.Factorysteps == 9)
+							else if(Sys.Factorysteps == 9)
 							{
 								Sys.Factorysteps = 10;
-								Sys.FactoryDelaycnt = 200;
+								Sys.FactoryDelaycnt = 500;
 							}
 						}
 						
@@ -2478,7 +2494,7 @@ void fKey_Process(void) //T =6ms
 						KeyStatus&=~KEY_ShortPress;
 						if(Sys.Factorysteps<3)
 						{
-							Sys.FactoryDelaycnt = 200;
+							Sys.FactoryDelaycnt = 500;
 							Sys.Factorysteps++;
 						}
 							
@@ -2487,12 +2503,12 @@ void fKey_Process(void) //T =6ms
 							if(Sys.Factorysteps==6)
 							{
 								Sys.Factorysteps = 7;
-								Sys.FactoryDelaycnt = 200;
+								Sys.FactoryDelaycnt = 500;
 							}
-							if(Sys.Factorysteps == 9)
+							else if(Sys.Factorysteps == 9)
 							{
 								Sys.Factorysteps = 10;
-								Sys.FactoryDelaycnt = 200;
+								Sys.FactoryDelaycnt = 500;
 							}
 						}
 						
@@ -2512,7 +2528,7 @@ void fKey_Process(void) //T =6ms
 						KeyStatus&=~KEY_ShortPress;
 						if(Sys.Factorysteps<3)
 						{
-							Sys.FactoryDelaycnt = 200;
+							Sys.FactoryDelaycnt = 500;
 							Sys.Factorysteps++;
 						}
 							
@@ -2521,12 +2537,12 @@ void fKey_Process(void) //T =6ms
 							if(Sys.Factorysteps==7)
 							{
 								Sys.Factorysteps = 8;
-								Sys.FactoryDelaycnt = 200;
+								Sys.FactoryDelaycnt = 500;
 							}
-							if(Sys.Factorysteps == 9)
+							else if(Sys.Factorysteps == 9)
 							{
 								Sys.Factorysteps = 10;
-								Sys.FactoryDelaycnt = 200;
+								Sys.FactoryDelaycnt = 500;
 							}
 
 							if(Sys.Errcode==0 && Sys.Factorysteps==11)
@@ -2552,7 +2568,7 @@ void fKey_Process(void) //T =6ms
 						KeyStatus&=~KEY_ShortPress;
 						if(Sys.Factorysteps<3)
 						{
-							Sys.FactoryDelaycnt = 200;
+							Sys.FactoryDelaycnt = 500;
 							Sys.Factorysteps++;
 						}
 							
@@ -2561,12 +2577,12 @@ void fKey_Process(void) //T =6ms
 							if(Sys.Factorysteps==8)
 							{
 								Sys.Factorysteps = 9;
-								Sys.FactoryDelaycnt = 200;
+								Sys.FactoryDelaycnt = 500;
 							}
-							if(Sys.Factorysteps == 9)
+							else if(Sys.Factorysteps == 9)
 							{
 								Sys.Factorysteps = 10;
-								Sys.FactoryDelaycnt = 200;
+								Sys.FactoryDelaycnt = 500;
 							}
 						}
 						
@@ -3896,6 +3912,9 @@ void fLCD_reinit(void)
 6.自检里面显示软件版本信息.更新软件完成日期。
 7.门控开关未检测到无法开机，并且处于关机状态。
 8.重新采样按键值，初始化按键和2837一样。
+
+2022.03.03 分支
+1.
 */
 void hal_entry(void)
 {
@@ -3913,7 +3932,7 @@ void hal_entry(void)
 	R_GPT_Start (&g_timer1_ctrl);
 	R_GPT_Start (&g_timer0_125us_ctrl);
 	__enable_irq();
-	Sys.Errcode |= ERR_HALL; // 上电默认霍尔关闭 只有通讯成功的情况下 霍尔才能正常
+	// Sys.Errcode |= ERR_HALL; // 上电默认霍尔关闭 只有通讯成功的情况下 霍尔才能正常
 	
 	#ifdef TEST
 	fFactory_process();

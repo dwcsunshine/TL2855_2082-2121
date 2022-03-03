@@ -3932,7 +3932,7 @@ void hal_entry(void)
 	R_GPT_Start (&g_timer1_ctrl);
 	R_GPT_Start (&g_timer0_125us_ctrl);
 	__enable_irq();
-	// Sys.Errcode |= ERR_HALL; // 上电默认霍尔关闭 只有通讯成功的情况下 霍尔才能正常
+	Sys.Errcode |= ERR_HALL; // 上电默认霍尔关闭 只有通讯成功的情况下 霍尔才能正常
 	
 	#ifdef TEST
 	fFactory_process();

@@ -126,6 +126,7 @@ char  table_filterpercent[15]= {'#','5','E','B','D','8','2',' ',0x31,0x30,0x30,0
 char  const table_100percent[4]= {0xee,0x98,0x84,'#'};
 char  const table_100percentdispgreen[15]= {'#','5','E','B','D','8','2',' ',0x31,0x30,0x30,0xee,0x98,0x84,'#'}; //5EBD82 绿色
 char  table_SensorsoftwareVer[20]={0};
+char  table_Err[20]={'E','r','r','-'};
 
 u8 tim1ms_flg = 0;
 static u16 Animation_cnt = 0;
@@ -1333,7 +1334,9 @@ void fFactory_process(void)  //产测模式
 	static lv_obj_t* label_Sensorsoftwareversion;  // 传感器板子软件版本
 	static lv_obj_t* label_PCBversion;  // PCB硬件版本
 	static lv_obj_t* label_Comletedata;  // 完成日期
+	static lv_obj_t* label_Err;  // 故障标签
 	static lv_style_t lv_style_src_fac; 
+	static lv_style_t lv_style_src_fac_err;
 	static u8 delay = 0;
 	Sys.power = 1;
 
@@ -1345,25 +1348,31 @@ void fFactory_process(void)  //产测模式
 		Src_fac=lv_obj_create(scr,NULL);  //设置一个工厂模式的专用对象，父对象为屏幕
 		lv_obj_set_size(Src_fac,320,240);	 //设置大小为整个屏幕
 		lv_style_copy(&lv_style_src_fac,&lv_style_plain_color); // 将系统颜色参数复制给产测专用的style
+		lv_style_copy(&lv_style_src_fac_err,&lv_style_plain_color); // 将系统颜色参数复制给产测专用的style
 		lv_style_src_fac.text.font=&my_font_icon_L; //设置字体为自己生成的小字体
+		lv_style_src_fac_err.text.font=&my_font_icon_L; //设置字体为自己生成的小字体
 		lv_obj_set_style(Src_fac,&lv_style_src_fac); // 设置style.
+		
 
 
 		label_MainboardSoftwareversion=lv_label_create(Src_fac,NULL);
 		lv_label_set_recolor(label_MainboardSoftwareversion,true); //使能重定义颜色
 		lv_label_set_style(label_MainboardSoftwareversion,LV_LABEL_STYLE_MAIN,&lv_style_src_fac);
 		lv_obj_set_size(label_MainboardSoftwareversion,100,200);
-		lv_obj_set_pos(label_MainboardSoftwareversion,10,10);
+		lv_obj_set_pos(label_MainboardSoftwareversion,10,20);
 		lv_label_set_long_mode(label_MainboardSoftwareversion,LV_LABEL_LONG_EXPAND); // 字符自己扩展
 	
 		label_Sensorsoftwareversion=lv_label_create(Src_fac,label_MainboardSoftwareversion);
 		label_PCBversion=lv_label_create(Src_fac,label_MainboardSoftwareversion);
 		label_Comletedata=lv_label_create(Src_fac,label_MainboardSoftwareversion);
-		lv_obj_set_pos(label_Sensorsoftwareversion,10,50);
-		lv_obj_set_pos(label_PCBversion,10,90);
-		lv_obj_set_pos(label_Comletedata,10,130);
+		lv_obj_set_pos(label_Sensorsoftwareversion,10,70);
+		lv_obj_set_pos(label_PCBversion,10,120);
+		lv_obj_set_pos(label_Comletedata,10,170);
 		lv_style_src_fac.text.opa = 0;
-		
+		label_Err=lv_label_create(Src_fac,label_MainboardSoftwareversion);
+		lv_obj_set_style(label_Err,&lv_style_src_fac_err); // 设置style.
+		lv_obj_set_pos(label_Err,100,110);
+		lv_style_src_fac_err.text.opa = 0;
 	}
 	
 	LED_key_all_off();//关闭所有的按键灯
@@ -1417,38 +1426,6 @@ void fFactory_process(void)  //产测模式
 		break;
 	case 4:
 		/* code */
-		LED_Key_auto_on();
-		
-		break;
-	case 5:
-		/* code */
-		LED_Key_sleep_on();
-		LED_Key_auto_on();
-		break;
-	case 6:
-		/* code */
-		LED_Key_sleep_on();
-		LED_Key_auto_on();
-		LED_Key_speed_on();
-		break;
-	case 7:
-		/* code */
-		LED_Key_sleep_on();
-		LED_Key_auto_on();
-		LED_Key_speed_on();
-		LED_Key_filter_on();
-		break;
-	case 8:
-		/* code */
-		LED_Key_sleep_on();
-		LED_Key_auto_on();
-		LED_Key_speed_on();
-		LED_Key_filter_on();
-		LED_Key_power_on();
-		break;
-	case 9:
-		/* code */
-		LED_key_all_on();
 		lv_style_src_fac.text.opa = 0; //隐藏版本信息
 		if(Sys.FactoryDelaycnt == 500)
 		{
@@ -1484,50 +1461,142 @@ void fFactory_process(void)  //产测模式
 			Task_Tvocvalurefresh (Sys.tvocvalue);
 			Task_Pm25valuerefresh(Sys.pm25value);
 		}
-		break;
-	case 10:  // 显示传感器信息
-		/* code */
+		LED_Key_auto_on();
 		
-		LED_key_all_on();
-		Sys.Factorysteps = 11;
 		break;
-	case 11:  // 显示传感器信息
+	case 5:
 		/* code */
+		LED_Key_sleep_on();
+		LED_Key_auto_on();
+		break;
+	case 6:
+		/* code */
+		LED_Key_sleep_on();
+		LED_Key_auto_on();
+		LED_Key_speed_on();
+		break;
+	case 7:
+		/* code */
+		LED_Key_sleep_on();
+		LED_Key_auto_on();
+		LED_Key_speed_on();
+		LED_Key_filter_on();
+		break;
+	case 8:
+		/* code */
+		LED_Key_sleep_on();
+		LED_Key_auto_on();
+		LED_Key_speed_on();
+		LED_Key_filter_on();
 		LED_Key_power_on();
-		lv_style_src_fac.text.opa = 0; //隐藏版本信息
 		break;
-	case 12:  //退出自检的流程. 
+	case 9:
 		/* code */
-		lv_obj_set_parent(label_pm25,scr);
-		lv_obj_set_parent(label_tvoc,scr);
-		lv_obj_set_parent(label_pm25value,scr);
-		lv_obj_set_parent(label_tvocvalue,scr);
-		lv_obj_set_parent(label_humi,scr);
-		lv_obj_set_parent(label_temperature,scr);
-		fTurn_off();
-		Sys.Factorysteps = 0;
-		Sys.FactoryDelaycnt = 500;
-		Sys.Factoryflg = 0;
-		return;
+		LED_key_all_on();
+		if(Sys.FactoryDelaycnt==0)
+		{
+			Sys.Factorysteps = 10;
+		}
+			
 		break;
+	case 10:  // //退出自检的流程. 
+		/* code */
+		LED_key_all_on();
+		if(Sys.Errcode == 0)
+		{
+			lv_obj_set_parent(label_pm25,scr);
+			lv_obj_set_parent(label_tvoc,scr);
+			lv_obj_set_parent(label_pm25value,scr);
+			lv_obj_set_parent(label_tvocvalue,scr);
+			lv_obj_set_parent(label_humi,scr);
+			lv_obj_set_parent(label_temperature,scr);
+			fTurn_off();
+			Sys.Factorysteps = 0;
+			Sys.FactoryDelaycnt = 500;
+			Sys.Factoryflg = 0;
+			return;
+		}
+		
+		break;
+
 	
 	default:
 		break;
 	}
 	if(Sys.FactoryDelaycnt)
 		Sys.FactoryDelaycnt--;
-	if(Sys.Factorysteps>=9) //自检到了显示PM25那一步
-	{
+	if(Sys.Factorysteps>=4) //自检到了显示PM25那一步
+	{		
 		if(++delay>=20)
 		{
 			delay = 0;
-			Main_screen_display();
-			Task_Temprefresh (Sys.Tempvalue);
-			Task_Humirefresh(Sys.Humivalue);
-			Task_Tvocvalurefresh (Sys.tvocvalue);
-			Task_Pm25valuerefresh(Sys.pm25value);
+			if(Sys.Errcode)
+			{
+				lv_style_src_fac_err.text.opa = 255;
+				Main_screen_clean();
+				table_Err[0]='E';
+				table_Err[1]='R';
+				table_Err[2]='R';
+				table_Err[3]='-';
+				if(Sys.Errcode&ERR_FAN)
+				{
+					table_Err[4]='F';
+					table_Err[5]='A';
+					table_Err[6]='N';
+					table_Err[7]=' ';
+				}
+				else if(Sys.Errcode&ERR_HALL)
+				{
+					table_Err[4]='H';
+					table_Err[5]='A';
+					table_Err[6]='L';
+					table_Err[7]='L';
+				}
+				else if(Sys.Errcode&ERR_COMM)
+				{
+					table_Err[4]='C';
+					table_Err[5]='O';
+					table_Err[6]='M';
+					table_Err[7]='M';
+				}
+				else if(Sys.Errcode&ERR_PM25)
+				{
+					table_Err[4]='P';
+					table_Err[5]='M';
+					table_Err[6]='2';
+					table_Err[7]='5';
+				}
+				else if(Sys.Errcode&ERR_TVOC)
+				{
+					table_Err[4]='T';
+					table_Err[5]='V';
+					table_Err[6]='O';
+					table_Err[7]='C';
+				}
+				else if(Sys.Errcode&ERR_Filterlock)
+				{
+					table_Err[4]='F';
+					table_Err[5]='I';
+					table_Err[6]='L';
+					table_Err[7]=' ';
+				}
+				
+				lv_label_set_array_text(label_Err,&table_Err[0],8);
+			}
+			else
+			{
+				lv_style_src_fac_err.text.opa = 0;
+				Main_screen_display();
+				Task_Temprefresh (Sys.Tempvalue);
+				Task_Humirefresh(Sys.Humivalue);
+				Task_Tvocvalurefresh (Sys.tvocvalue);
+				Task_Pm25valuerefresh(Sys.pm25value);
+			}
+			
 		}
 	}
+
+	
 	lv_obj_refresh_style(Src_fac);
 
 
@@ -2175,7 +2244,7 @@ void fTurn_off(void)
 
 void fLogic_ctrl(void)  //常用的一些逻辑判断  10MS loop
 {
-	if(Sys.Errcode&ERR_HALL)
+	if(Sys.Errcode&ERR_HALL && Sys.Factoryflg==0) //产测模式可以继续执行
 	{
 		if(Sys.power)
 			fTurn_off();
@@ -2192,7 +2261,7 @@ void fLogic_ctrl(void)  //常用的一些逻辑判断  10MS loop
 	else
 		TFT_LED = 0;
 
-	if(++Sys.comm.timeoutcnt>=(Sys.Factoryflg!=0?2000:6000))
+	if(++Sys.comm.timeoutcnt>=(Sys.Factoryflg!=0?800:6000))
 	{
 		Sys.comm.timeoutcnt = 6000;
 		Sys.Errcode |= ERR_COMM;
@@ -2413,11 +2482,7 @@ void fKey_Process(void) //T =6ms
 								Sys.Factorysteps = 4;
 								Sys.FactoryDelaycnt = 500;
 							}
-							else if(Sys.Factorysteps == 9)
-							{
-								Sys.Factorysteps = 10;
-								Sys.FactoryDelaycnt = 500;
-							}
+							
 						}	
 												
 					}
@@ -2444,11 +2509,7 @@ void fKey_Process(void) //T =6ms
 								Sys.Factorysteps = 5;
 								Sys.FactoryDelaycnt = 500;
 							}
-							else if(Sys.Factorysteps == 9)
-							{
-								Sys.Factorysteps = 10;
-								Sys.FactoryDelaycnt = 500;
-							}
+						
 						}
 						
 					}
@@ -2475,11 +2536,7 @@ void fKey_Process(void) //T =6ms
 								Sys.Factorysteps = 6;
 								Sys.FactoryDelaycnt = 500;
 							}
-							else if(Sys.Factorysteps == 9)
-							{
-								Sys.Factorysteps = 10;
-								Sys.FactoryDelaycnt = 500;
-							}
+							
 						}
 						
 					}
@@ -2505,11 +2562,7 @@ void fKey_Process(void) //T =6ms
 								Sys.Factorysteps = 7;
 								Sys.FactoryDelaycnt = 500;
 							}
-							else if(Sys.Factorysteps == 9)
-							{
-								Sys.Factorysteps = 10;
-								Sys.FactoryDelaycnt = 500;
-							}
+							
 						}
 						
 					}
@@ -2539,16 +2592,7 @@ void fKey_Process(void) //T =6ms
 								Sys.Factorysteps = 8;
 								Sys.FactoryDelaycnt = 500;
 							}
-							else if(Sys.Factorysteps == 9)
-							{
-								Sys.Factorysteps = 10;
-								Sys.FactoryDelaycnt = 500;
-							}
-
-							if(Sys.Errcode==0 && Sys.Factorysteps==11)
-							{
-								fFactory_getout(); //退出自检
-							}
+							
 						}
 						
 					}
@@ -2577,13 +2621,9 @@ void fKey_Process(void) //T =6ms
 							if(Sys.Factorysteps==8)
 							{
 								Sys.Factorysteps = 9;
-								Sys.FactoryDelaycnt = 500;
+								Sys.FactoryDelaycnt = 2000;
 							}
-							else if(Sys.Factorysteps == 9)
-							{
-								Sys.Factorysteps = 10;
-								Sys.FactoryDelaycnt = 500;
-							}
+							
 						}
 						
 					}
@@ -2920,7 +2960,7 @@ void fFanFeedBackCalc(void)
 
 void fFilter_Cal(void) //滤网寿命计算
 {
-	if(Sys.power&&(Sys.Errcode&(bit0|bit7)==0))
+	if(Sys.power&&(Sys.Errcode&(ERR_COMM|ERR_FAN|ERR_HALL|ERR_Filterlock) == 0) ) //开机并且风机运行的情况下
 	{
 		if(++Sys.Filter.calcnt>=3600)
 		{
@@ -3200,7 +3240,7 @@ void fMotor_ctrl(void)
 		}
 	}
 
-	if((Sys.Errcode&(bit0|bit7))==0 && Sys.power) //开机并且没有错误的情况下
+	if((Sys.Errcode&(ERR_COMM|ERR_FAN|ERR_HALL|ERR_Filterlock))==0 && Sys.power) //开机并且没有错误的情况下
 	{
 		Sys.Speed.Target = Motorpara.Spd_Output[0];
 		//这里还应该需要添加失速计数，但是规格书里没看到失速保护
@@ -3913,8 +3953,13 @@ void fLCD_reinit(void)
 7.门控开关未检测到无法开机，并且处于关机状态。
 8.重新采样按键值，初始化按键和2837一样。
 
-2022.03.03 分支
-1.
+2022.03.04
+1.自检方案改为方案2.就是每个灯依次全部点亮.
+2.修复霍尔断开，再合上电机飞转的问题。这个是因为电机控制里面对于故障的判断没更新到位，滤网计算也同步更新.
+3.现在自检最后一步没问题自动关机
+4.更新程序日期以及PCB版本显示.
+5.现在产测模式下通讯8S连不上报故障
+6.自检下现在故障会显示故障代码.
 */
 void hal_entry(void)
 {

@@ -506,6 +506,12 @@ void Task_Line_Imagecreate(void)
 		src1_style_Mainscreen_Bigstyle.line.color  = LV_COLOR_MAKE(0x52,0x5f,0x6b); //色号是#525F6B
 
 	}
+		lv_line_set_points (line1, line_points,LINE_POINTS_NUM);
+		lv_line_set_style (line1, LV_LINE_STYLE_MAIN, &src1_style_Mainscreen_Bigstyle);
+		lv_line_set_points (line2, line_points1,LINE_POINTS_NUM1);
+		lv_line_set_style (line2, LV_LINE_STYLE_MAIN, &src1_style_Mainscreen_Bigstyle);
+		src1_style_Mainscreen_Bigstyle.line.opa = 0;
+		src1_style_Mainscreen_Bigstyle.line.color  = LV_COLOR_MAKE(0x52,0x5f,0x6b); //色号是#525F6B
 	//画彩图
 	if(Img_ColorLine==NULL)
 	{
@@ -553,17 +559,18 @@ void Task_Sensordatacreate(void)
 		lv_obj_align(label_pm25value, scr, LV_ALIGN_CENTER, -78, 28);
 		lv_obj_set_auto_realign (label_pm25value, true);
 		lv_obj_set_auto_realign (label_tvocvalue, true);
-		if(Sys.Warnup_Cnt<=300)  // 30S预热时间内显示
-		{
-			lv_label_set_array_text(label_tvocvalue,"- - -",5);
-			lv_label_set_array_text(label_pm25value,"- - -",5);
-		}
-		else
-		{
-			Task_Tvocvalurefresh (Sys.tvocvalue);
-			Task_Pm25valuerefresh(Sys.pm25value);
-		}
+		
 		src1_style_Mainscreen_Bigstyle.text.opa = 0;
+	}
+	if(Sys.Warnup_Cnt<=300)  // 30S预热时间内显示
+	{
+		lv_label_set_array_text(label_tvocvalue,"- - -",5);
+		lv_label_set_array_text(label_pm25value,"- - -",5);
+	}
+	else
+	{
+		Task_Tvocvalurefresh (Sys.tvocvalue);
+		Task_Pm25valuerefresh(Sys.pm25value);
 	}
 }
 
@@ -665,8 +672,10 @@ void Task_Temperaturecreate(void) //温度标签的创建
 {
 	if(label_temperature==NULL)
 	{
-		label_temperature = lv_label_create(scr,label_auto_manual); //创建一个标签
+		label_temperature = lv_label_create(scr,NULL); //创建一个标签
 		lv_label_set_long_mode (label_temperature, LV_LABEL_LONG_EXPAND);
+		lv_label_set_style(label_temperature,LV_LABEL_STYLE_MAIN,&src1_style_Mainscreen);
+		lv_obj_set_size(label_temperature,40,40);
 		lv_obj_align(label_temperature,scr,LV_ALIGN_IN_BOTTOM_LEFT,33,-10);
 		lv_label_set_align(label_temperature,LV_ALIGN_IN_BOTTOM_LEFT);
 		lv_label_set_array_text(label_temperature,(const char*)&table_temp,8);
@@ -679,11 +688,14 @@ void Task_Humicreate(void) //湿度标签的创建
 {
 	if(label_humi==NULL)
 	{
-		label_humi = lv_label_create(scr,label_auto_manual); //创建一个标签
+		label_humi = lv_label_create(scr,NULL); //创建一个标签
 		lv_label_set_long_mode (label_humi, LV_LABEL_LONG_EXPAND);
+		lv_label_set_style(label_humi,LV_LABEL_STYLE_MAIN,&src1_style_Mainscreen);
+		lv_obj_set_size(label_humi,40,40);
 		lv_obj_align(label_humi,scr,LV_ALIGN_IN_BOTTOM_MID,49,-10);
 		lv_label_set_align(label_humi,LV_ALIGN_IN_BOTTOM_MID);
 		lv_label_set_array_text(label_humi,(const char*)&table_humi,8);
+		
 //		Task_Humirefresh(Sys.Humivalue);
 	}
 }
@@ -1301,8 +1313,8 @@ void Filter_reset_animation(void)
 			src1_style_Mainscreen_Lock.text.opa =255;
 		if(Sys.Timer.setflg)
 			src1_style_Mainscreen_Timer.text.opa =255;
-		// Lvgl.Filtercnt=0;
-		// Lvgl.Curpfunction = Lvgl.Lastpfunction_InFilter;
+		Lvgl.Filtercnt=0;
+		Lvgl.Curpfunction = Lvgl.Lastpfunction_InFilter;
 		lv_obj_refresh_style (scr);
 	}
 	// if(++Lvgl.Filtercnt>5200 )
@@ -1430,24 +1442,9 @@ void fFactory_process(void)  //产测模式
 		if(Sys.FactoryDelaycnt == 500)
 		{
 			Task_Sensordatacreate();
-			if(label_humi==NULL)
-			{
-				label_humi = lv_label_create(scr,NULL); //创建一个标签
-				lv_label_set_long_mode (label_humi, LV_LABEL_LONG_EXPAND);
-				lv_obj_align(label_humi,scr,LV_ALIGN_IN_BOTTOM_MID,49,-10);
-				lv_label_set_align(label_humi,LV_ALIGN_IN_BOTTOM_MID);
-				lv_label_set_array_text(label_humi,(const char*)&table_humi,8);
-				lv_label_set_style(label_humi,LV_LABEL_STYLE_MAIN,&src1_style_Mainscreen);
-			}
-			if(label_temperature==NULL)
-			{
-				label_temperature = lv_label_create(scr,NULL); //创建一个标签
-				lv_label_set_long_mode (label_temperature, LV_LABEL_LONG_EXPAND);
-				lv_obj_align(label_temperature,scr,LV_ALIGN_IN_BOTTOM_LEFT,33,-10);
-				lv_label_set_align(label_temperature,LV_ALIGN_IN_BOTTOM_LEFT);
-				lv_label_set_array_text(label_temperature,(const char*)&table_temp,8);
-				lv_label_set_style(label_temperature,LV_LABEL_STYLE_MAIN,&src1_style_Mainscreen);
-			}
+			Task_Humicreate();
+			Task_Temperaturecreate();
+			
 			
 			lv_obj_set_parent(label_pm25,Src_fac);
 			lv_obj_set_parent(label_tvoc,Src_fac);
@@ -1510,6 +1507,7 @@ void fFactory_process(void)  //产测模式
 			lv_obj_set_parent(label_tvocvalue,scr);
 			lv_obj_set_parent(label_humi,scr);
 			lv_obj_set_parent(label_temperature,scr);
+			lv_obj_set_hidden(Src_fac,true);
 			fTurn_off();
 			Sys.Factorysteps = 0;
 			Sys.FactoryDelaycnt = 500;
@@ -1630,15 +1628,15 @@ void sleep_screen(void)
 		if(Sys.Timer.settingflg||Sys.Timer.setflg) // 有定时设置 或者正在设置
 		{
 			Task_Timercreate();
-			if(Sys.Timer.settingflg && gFre1hzflashflg)
-			{
-				if(KeyStatus&KEY_LongOnce&&KeyValue==KEY_TIMER) // once标志做为长按不放的标志 借用
-					src1_style_Mainscreen_Timer.text.opa = 255;
-				else
-					src1_style_Mainscreen_Timer.text.opa = 0;
-			}
-			else
-				src1_style_Mainscreen_Timer.text.opa = 255;
+			// if(Sys.Timer.settingflg && gFre1hzflashflg)
+			// {
+			// 	if(KeyStatus&KEY_LongOnce&&KeyValue==KEY_TIMER) // once标志做为长按不放的标志 借用
+			// 		src1_style_Mainscreen_Timer.text.opa = 255;
+			// 	else
+			// 		src1_style_Mainscreen_Timer.text.opa = 0;
+			// }
+			// else
+			src1_style_Mainscreen_Timer.text.opa = 255;
 
 			if(Sys.Timer.hour<10)
 			{
@@ -1710,6 +1708,7 @@ void Normal_Display(void)  //正常显示
 	{
 		Lvgl.cnt = 1;
 		img_style_sleep.image.opa = 0;
+		Main_screen_display();
 		Task_Line_Imagecreate ();
 		Task_Sensordatacreate();
 		Task_Modecreate(); //模式标签的创建 注意这个必须最先创建
@@ -1720,9 +1719,9 @@ void Normal_Display(void)  //正常显示
 		{
 			lv_obj_set_hidden (label_auto_manual,false); //之前如果隐藏了模式标签的话需要显示
 		}
-//		lv_obj_refresh_style (scr);
+		lv_obj_refresh_style (scr);
 	}
-	lv_obj_refresh_style (scr);
+	
 	if(Lvgl.cnt%10 == 0) //
 	{
 		Main_screen_display();
@@ -1751,16 +1750,16 @@ void Normal_Display(void)  //正常显示
 			Task_Pm25valuerefresh(Sys.pm25value);
 		}
 
-		if(Sys.Timer.setflg ||Sys.Timer.settingflg) // 有定时设置 或者正在设置
+		if(Sys.Timer.settingflg||Sys.Timer.setflg) // 有定时设置 或者正在设置
 		{
 			Task_Timercreate();
-			if(Sys.Timer.settingflg && gFre1hzflashflg)
-				if(KeyStatus&KEY_LongOnce&&KeyValue==KEY_TIMER) // once标志做为长按不放的标志 借用
-					src1_style_Mainscreen_Timer.text.opa = 255;
-				else
-					src1_style_Mainscreen_Timer.text.opa = 0;
-			else
-				src1_style_Mainscreen_Timer.text.opa = 255;
+			// if(Sys.Timer.settingflg && gFre1hzflashflg)
+			// 	if(KeyStatus&KEY_LongOnce&&KeyValue==KEY_TIMER) // once标志做为长按不放的标志 借用
+			// 		src1_style_Mainscreen_Timer.text.opa = 255;
+			// 	else
+			// 		src1_style_Mainscreen_Timer.text.opa = 0;
+			// else
+			src1_style_Mainscreen_Timer.text.opa = 255;
 
 			if(Sys.Timer.hour<10)
 			{
@@ -1815,8 +1814,12 @@ void Normal_Display(void)  //正常显示
 
 	}
 
-	if(++Lvgl.cnt>10)
+	if(++Lvgl.cnt>20)
+	{
 		Lvgl.cnt = 1;
+		lv_obj_refresh_style (scr);
+	}
+		
 }
 
 void Turn_On_Animation(void)
@@ -1855,6 +1858,7 @@ void Turn_On_Animation(void)
 			Task_Fancreate(); //风速图标的创建
 			Task_Humicreate();
 			Task_Temperaturecreate();
+			
 			if(Sys.Timer.setflg)
 				Task_Timercreate(); 	//定时标签
 			if(Sys.childlock)
@@ -1980,7 +1984,7 @@ void fTimer_set (void) //定时设定
 	else
 	{
 		Sys.Timer.settingflg = 1; //正在设定
-		Sys.Timer.hour = 0;;
+		Sys.Timer.hour = 1;;
 	}
 }
 
@@ -2008,7 +2012,10 @@ void fTimer_excution(void)
 			if(Sys.Timer.hour>1)
 				Sys.Timer.hour--;
 			else
-				fTimer_clr ();
+			{
+				fTurn_off(); //定时时间到关机
+			}
+				
 		}
 	}
 
@@ -2237,15 +2244,16 @@ void fTurn_off(void)
 	Lvgl.cnt = 0;
 	Main_screen_clean();
 	img_style_sleep.image.opa = 0;
-	if(Sys.Warnup_Cnt<=300)
-		Sys.Warnup_Cnt=301; // 手动关机直接预热结束
+	// if(Sys.Warnup_Cnt<=300)
+	Sys.Warnup_Cnt=0; // 手动关机现在改为也需要重新计数
 	fTimer_clr();
 }
 
 void fLogic_ctrl(void)  //常用的一些逻辑判断  10MS loop
 {
-	if(Sys.Errcode&ERR_HALL && Sys.Factoryflg==0) //产测模式可以继续执行
+	if(Sys.Errcode&ERR_HALL && Sys.Factoryflg==0 && Sys.KeyTouchinit==0) //产测模式可以继续执行 按键初始化完成
 	{
+		
 		if(Sys.power)
 			fTurn_off();
 	}
@@ -2259,7 +2267,12 @@ void fLogic_ctrl(void)  //常用的一些逻辑判断  10MS loop
 		}
 	}
 	else
+	{
 		TFT_LED = 0;
+		if(Sys.childlock)  // 有童锁的情况下解除童锁.
+			Sys.childlock = 0;
+	}
+		
 
 	if(++Sys.comm.timeoutcnt>=(Sys.Factoryflg!=0?800:6000))
 	{
@@ -2281,7 +2294,13 @@ void fKey_GetValue(void)  //获取键值并处理
 	{
 		keyTemp = button_status;
 		if(Sys.Errcode&ERR_HALL)
+		{
+			if(keyTemp == KEY_POWER && Sys.power==0)
+				Sys.flashing_ooh = 2000;
 			keyTemp = 0;
+		}
+			
+			
 		switch (status)
 		{
 		case 0:										//扫描按键 检测是否有按下
@@ -2779,6 +2798,7 @@ void fKey_Process(void) //T =6ms
 					Lvgl.Lastpfunction_InFilter = Lvgl.Curpfunction;
 					Lvgl.Filtercnt = 0;
 					Lvgl.Curpfunction = Filter_reset_animation;
+					Sys.Filter.accumulatedhour = 0; //
 				}
 				Buz_Beep ();
 			}
@@ -3122,6 +3142,29 @@ void fMotor_ctrl(void)
 	p = &Motorpara.Spd_Off;
 	static u16 sErr_30s=0;
 	static u16 sErr_30s_1=0;
+	switch (Sys.opmode)
+	{
+	case emodeAuto:
+		if(Sys.Warnup_Cnt<=300)  //预热30S之内风速保持最低挡位
+		{
+			Sys.Speed.gearreal = 0;
+		}
+		else
+		{
+			Sys.Speed.gearreal = Sys.AQI_LEVEL;
+		}
+		break;
+	case emodeManual:
+		Sys.Speed.gearreal = Sys.Speed.gear;
+		break;
+	case emodeSleep:
+		Sys.Speed.gearreal = 0;
+		break;
+	default:
+		Sys.Speed.gearreal = 0;
+		break;
+
+	}
 	if(Sys.Errcode&(ERR_COMM|ERR_FAN|ERR_HALL|ERR_Filterlock))  //风机故障 或者 锁机的情况下
 	{
 		PWR_MOTOR_DIS();
@@ -3314,8 +3357,9 @@ void fDisp_LedDriver(void) // LED驱动控制 125us
 	static u16 sBreath_dutyset=0;
 	static u8 sBreath_dutycnt=0;
 	volatile u16 sBreath_dutytmp = 0;
-	if(Sys.Factoryflg)  // 产测模式下不执行
+	if(Sys.Factoryflg ||Sys.KeyTouchinit!=0)  // 产测模式下不执行 按键未初始化完成
 		return;
+	LED_key_all_off();
 	if(Sys.power)
 	{
 		if(Sys.opmode == emodeSleep)
@@ -3352,23 +3396,38 @@ void fDisp_LedDriver(void) // LED驱动控制 125us
 	else
 	{
 		LED_key_withoutpower_off();
-		if(sBreath_dutyset>=4000)
+		if(Sys.flashing_ooh>0)
 		{
-			sBreath_dutytmp = 0;
+			if((Sys.flashing_ooh%1000)>500)
+			{
+				LED_Key_power_on();
+			}	
+			else
+			{
+				LED_Key_power_off();
+			}
+				
 		}
 		else
 		{
-			sBreath_dutytmp = (sBreath_dutyset>=2000)?(3999-sBreath_dutyset):(sBreath_dutyset);
-			sBreath_dutytmp=sBreath_dutytmp/40;
-		}
+			if(sBreath_dutyset>=4000)
+			{
+				sBreath_dutytmp = 0;
+			}
+			else
+			{
+				sBreath_dutytmp = (sBreath_dutyset>=2000)?(3999-sBreath_dutyset):(sBreath_dutyset);
+				sBreath_dutytmp=sBreath_dutytmp/40;
+			}
 
-		if(sBreath_dutycnt<sBreath_dutytmp)
-		{
-			LED_Key_power_on ();
-		}
-		else
-		{
-			LED_Key_power_off ();
+			if(sBreath_dutycnt<sBreath_dutytmp)
+			{
+				LED_Key_power_on ();
+			}
+			else
+			{
+				LED_Key_power_off ();
+			}
 		}
 
 	}
@@ -3540,11 +3599,7 @@ void fDisp_Init(void)
 }
 void  Sys_Init(void) //系统初始化函数
 {
-	uint32_t volatile  tmp1,tmp2;
-	u16 volatile i;
-	u8 volatile times= 0;
-	u8 volatile Keytemp = 0;
-	u8 volatile Keytime = 0;
+	
 	TFT_CS = 1;
 	TFT_RES = 1;
 	TFT_LED = 0;
@@ -3600,68 +3655,7 @@ void  Sys_Init(void) //系统初始化函数
 	g_spi0_ctrl.p_regs->SPCMD[0] = 0xe780;
 	g_spi0_ctrl.p_regs->SPCR_b.SPE = 1; // SPI功能打开
 
-	for(Keytime=0;Keytime<4;Keytime++)  //最多检测4次 可以初始化4次最多
-	{
-		qe_touch_Init();  // 按键初始化
-		delay(0xff);
-		for (i = 0; i < 600; i++)  // 按键设置
-		{
-			// R_WDT_Refresh(&g_wdt_ctrl); //WDT 刷新
-			Keytemp = qe_getvalueInit();
-			if(Keytemp != 0 &&i >250)  // 检测到有按键按下    可以判断为误动作  重新初始化 至少要检测0.5S
-			{
-				break;
-			}
-		}
-		if(Keytemp == 0)  //前面按键都正常
-		{
-			for(i=0; i<TOUCH_CFG_NUM_BUTTONS; i++)
-			{
-				tmp1+= g_touch_button_reference[i];
-			}
-			for(i=0; i<TOUCH_CFG_NUM_BUTTONS; i++)
-			{
-				tmp2+= g_touch_button_countvalue[i];
-			}
-			if(tmp1<(12000*TOUCH_CFG_NUM_BUTTONS) || tmp2<(12000*TOUCH_CFG_NUM_BUTTONS)) //只要按键基准值或者检测值不正常 就重新初始化按键
-			{
-				qe_touch_Init();
-			}	
-			else
-			{
-				for(times = 0; times < 3; times++) //比较基准和按键情况
-				{
-					if((abs(g_touch_button_countvalue[times]-g_touch_button_reference[times]))>=280 && g_touch_button_countvalue[times]>g_touch_button_reference[times])
-					{
-						times = 4; // 如果值在认定的错误区间，直接退出
-						break;
-					}
-				}
-
-				if(times!=4) //上面值错误，需要进行初始化
-				{
-					break; //上面值出来都没啥问题  可以直接退出4次初始化大循环
-				}
-				
-			}
-		}
-
-		
-	}
 	
-	
-	
-
-	for (i = 0; i < 600; i++)  // 按键设置 稳定阶段 这个也是一个保险
-	{
-		// R_WDT_Refresh(&g_wdt_ctrl); //WDT 刷新
-		Keytemp=qe_getvalueInit();
-		if(Keytemp!=0 && i>400) // 至少要保持0.8S
-		{
-			qe_touch_Init();// 初始化
-			break;
-		}
-	}
 
 
 }
@@ -3673,46 +3667,50 @@ void fFlashdata_read(void)
 	u8 checksum = 0;
 	u8 datalen = 0;
 //---------------------获取配置信息信息-----------------------------
-//	Addr = FLASH_HP_DF_BLOCK_0;
-//	do
-//	{
-//		memset(&g_src[0],0,sizeof(g_src)); //缓存数据数组清除
-//
-//		datalen = *((uint8_t *)(Addr+2));
-//		if(datalen> sizeof(g_src))
-//			datalen = sizeof(g_src);
-//		for(i=0; i<datalen; i++) //获取数据参数
-//	    {
-//	        g_src[i] = *((uint8_t *)(Addr+i));
-//			if(i<(datalen-2))
-//				checksum+= g_src[i];
-//	    }
-//		Addr+=FLASH_HP_DF_BLOCK_SIZE;
-//		if(g_src[0]==0x5F &&g_src[1]==0x50&& (checksum== g_src[datalen-2]) && (g_src[datalen-1]==0xfa))
-//		{
-//			i = 3;
-//			Sys.Filter.accumulatedhour = g_src[i++];
-//			Sys.Filter.accumulatedhour<<=8;
-//			Sys.Filter.accumulatedhour |= g_src[i++];
-//
-//			Sys.power = g_src[i++];
-//			if(Sys.power==1)
-//			{
-//				Sys.Warnup_Cnt=301; // 掉电记忆是开机直接跳过30秒预热
-//				Sys.opmode = g_src[i++];
-//
-//				Sys.Speed.gear = g_src[i++];
-//				if(Sys.opmode == emodeSleep)
-//					Lvgl.Lastpfunction=Lvgl.Curpfunction = sleep_screen;
-//				else
-//					Lvgl.Lastpfunction=Lvgl.Curpfunction = Normal_Display;
-//
-//			}
-//			break;
-//		}
+	Addr = FLASH_HP_DF_BLOCK_0;
+	do
+	{
+		memset(&g_src[0],0,sizeof(g_src)); //缓存数据数组清除
 
-//	}
-//	while (Addr<=FLASH_HP_DF_BLOCK_1);
+		datalen = *((uint8_t *)(Addr+2));
+		if(datalen> sizeof(g_src))
+			datalen = sizeof(g_src);
+		for(i=0; i<datalen; i++) //获取数据参数
+	    {
+	        g_src[i] = *((uint8_t *)(Addr+i));
+			if(i<(datalen-2))
+				checksum+= g_src[i];
+	    }
+		Addr+=FLASH_HP_DF_BLOCK_SIZE;
+		if(g_src[0]==0x5F &&g_src[1]==0x50&& (checksum== g_src[datalen-2]) && (g_src[datalen-1]==0xfa))
+		{
+			i = 3;
+			Sys.Filter.accumulatedhour = g_src[i++];
+			Sys.Filter.accumulatedhour<<=8;
+			Sys.Filter.accumulatedhour |= g_src[i++];
+			if(Sys.Errcode&ERR_HALL)
+			{
+				fTurn_off();
+			}
+			else
+				Sys.power = g_src[i++];
+			if(Sys.power==1)
+			{
+				Sys.Warnup_Cnt=301; // 掉电记忆是开机直接跳过30秒预热
+				Sys.opmode = g_src[i++];
+
+				Sys.Speed.gear = g_src[i++];
+				if(Sys.opmode == emodeSleep)
+					Lvgl.Lastpfunction=Lvgl.Curpfunction = sleep_screen;
+				else
+					Lvgl.Lastpfunction=Lvgl.Curpfunction = Normal_Display;
+
+			}
+			break;
+		}
+
+	}
+	while (Addr<=FLASH_HP_DF_BLOCK_1);
 	fFilter_Cal();  //滤网寿命计算
 
 
@@ -3782,7 +3780,8 @@ void fDeviceData_Init(void)
 	Sys.Filter.calcnt = 0;
 	Sys.comm.confirmcnt = 4;
 	Sys.Sleep3S_Cnt = SLEEP3S_CNT;
-	
+	Sys.Errcode |=ERR_HALL;
+	Sys.KeyTouchinit = 1;
 }
 
 
@@ -3900,6 +3899,79 @@ void fLCD_reinit(void)
 }
 
 
+void KeyTouch_Init(void)
+{
+	uint32_t volatile  tmp1,tmp2;
+	u16 volatile i;
+	u8 volatile times= 0;
+	u8 volatile Keytemp = 0;
+	u8 volatile Keytime = 0;
+	
+	for(Keytime=0;Keytime<4;Keytime++)  //最多检测4次 可以初始化4次最多
+	{
+		qe_touch_Init();  // 按键初始化
+		delay(0xff);
+		for (i = 0; i < 600; i++)  // 按键设置
+		{
+			// R_WDT_Refresh(&g_wdt_ctrl); //WDT 刷新
+			Keytemp = qe_getvalueInit();
+			if(Keytemp != 0 &&i >250)  // 检测到有按键按下    可以判断为误动作  重新初始化 至少要检测0.5S
+			{
+				break;
+			}
+		}
+		if(Keytemp == 0)  //前面按键都正常
+		{
+			for(i=0; i<TOUCH_CFG_NUM_BUTTONS; i++)
+			{
+				tmp1+= g_touch_button_reference[i];
+			}
+			for(i=0; i<TOUCH_CFG_NUM_BUTTONS; i++)
+			{
+				tmp2+= g_touch_button_countvalue[i];
+			}
+			if(tmp1<(12000*TOUCH_CFG_NUM_BUTTONS) || tmp2<(12000*TOUCH_CFG_NUM_BUTTONS)) //只要按键基准值或者检测值不正常 就重新初始化按键
+			{
+				qe_touch_Init();
+			}	
+			else
+			{
+				for(times = 0; times < 3; times++) //比较基准和按键情况
+				{
+					if((abs(g_touch_button_countvalue[times]-g_touch_button_reference[times]))>=280 && g_touch_button_countvalue[times]>g_touch_button_reference[times])
+					{
+						times = 4; // 如果值在认定的错误区间，直接退出
+						break;
+					}
+				}
+
+				if(times!=4) //上面值错误，需要进行初始化
+				{
+					break; //上面值出来都没啥问题  可以直接退出4次初始化大循环
+				}
+				
+			}
+		}
+
+		
+	}
+	
+	
+	
+
+	for (i = 0; i < 600; i++)  // 按键设置 稳定阶段 这个也是一个保险
+	{
+		// R_WDT_Refresh(&g_wdt_ctrl); //WDT 刷新
+		Keytemp=qe_getvalueInit();
+		if(Keytemp!=0 && i>400) // 至少要保持0.8S
+		{
+			qe_touch_Init();// 初始化
+			break;
+		}
+	}
+
+	Sys.KeyTouchinit = 0;
+}
 
 
 /*
@@ -3960,6 +4032,18 @@ void fLCD_reinit(void)
 4.更新程序日期以及PCB版本显示.
 5.现在产测模式下通讯8S连不上报故障
 6.自检下现在故障会显示故障代码.
+
+2022.03.07 根据03.04送样反馈更改程序.
+1.童锁模式在关机的情况下清除童锁. OK 
+2.滤网扣减没有，老化30H后，仍显示100%； 这个应该是对的 测试没完成.
+3.修复定时时间到未关机的bug.  OK
+4.定时操作时，从1H开始，不要0H，且图标不要闪烁； OK
+5.关机后再开机，有时会显示001,只要关机后再开机，应显示“---”；说明客户不需要关机在开机的30S时间跳过. OK
+6.门盖未关时，按开机键，电源指示灯要闪烁2次（1HZ）； OK
+7.恢复掉电记忆功能
+8.修复滤网复位之后无法跳转到正常显示的函数的bug.
+9.修复开机关机时候，PM25和TVOC显示01 然后显示---的bug。
+10.修复霍尔和掉电记忆冲突造成的灯闪烁的问题。  0307 V1 到此为止
 */
 void hal_entry(void)
 {
@@ -3973,11 +4057,12 @@ void hal_entry(void)
 	fDisp_Init();
 	Buz_Beep ();
 	fDeviceData_Init();
-	fFlashdata_read();
+	
 	R_GPT_Start (&g_timer1_ctrl);
 	R_GPT_Start (&g_timer0_125us_ctrl);
 	__enable_irq();
-	Sys.Errcode |= ERR_HALL; // 上电默认霍尔关闭 只有通讯成功的情况下 霍尔才能正常
+	KeyTouch_Init();  //按键初始化
+	fFlashdata_read();
 	
 	#ifdef TEST
 	fFactory_process();
@@ -4035,8 +4120,8 @@ void Timer1_1ms_callback (timer_callback_args_t * p_args)
 		else
 			(*Lvgl.Curpfunction)();
 	}
-
-	fKey_Process();  // 按键处理函数  键值获取大概需要5ms 时间
+	if(Sys.KeyTouchinit==0) //未调试按键
+		fKey_Process();  // 按键处理函数  键值获取大概需要5ms 时间
 
 	if(Lvgl.Curpfunction!=Filter_reset_animation)
 	{
@@ -4089,6 +4174,12 @@ void Timer1_1ms_callback (timer_callback_args_t * p_args)
 	}
 	if(sT1mscnt>=8000)
 		sT1mscnt = 0;
+
+	if(Sys.Errcode&ERR_HALL)
+	{
+		if(Sys.flashing_ooh)
+			Sys.flashing_ooh--;
+	}
 	fBuz_Driver(); //蜂鸣器
 	fBoard_Sensorcommflow(); // 主从板通讯处理
 

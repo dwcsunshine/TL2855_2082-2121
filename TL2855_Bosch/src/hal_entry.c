@@ -5,6 +5,7 @@
 #include "lv_tests\lv_test_theme\lv_test_theme_2.h"
 #include "lv_tests\lv_test_theme\lv_test_theme_2.h"
 #include "hal_entry.h"
+
 bordecommdef boarduart;
 Sys_str	Sys;  // 系统标志位等等参数
 FG_DEF FG;
@@ -126,6 +127,7 @@ char  table_filterpercent[15]= {'#','5','E','B','D','8','2',' ',0x31,0x30,0x30,0
 char  const table_100percent[4]= {0xee,0x98,0x84,'#'};
 char  const table_100percentdispgreen[15]= {'#','5','E','B','D','8','2',' ',0x31,0x30,0x30,0xee,0x98,0x84,'#'}; //5EBD82 绿色
 char  table_SensorsoftwareVer[20]={0};
+char  table_Checksum[20]={0};
 char  table_Err[20]={'E','r','r','-'};
 
 u8 tim1ms_flg = 0;
@@ -1339,6 +1341,21 @@ void Filter_reset_animation(void)
 	// }
 
 }
+
+u8 fget_char(u16 data)
+{
+	if(data<10)
+	{
+		return (u8)(0x30+data);
+	}
+	else if(data<=16)
+	{
+		return (u8)(0x41+(data-10));
+	}
+	else
+		return ' ';
+
+}
 void fFactory_process(void)  //产测模式
 {
 	static lv_obj_t* Src_fac=NULL;  // 工厂模式时候的界面
@@ -1346,6 +1363,7 @@ void fFactory_process(void)  //产测模式
 	static lv_obj_t* label_Sensorsoftwareversion;  // 传感器板子软件版本
 	static lv_obj_t* label_PCBversion;  // PCB硬件版本
 	static lv_obj_t* label_Comletedata;  // 完成日期
+	static lv_obj_t* label_Checksum;  // 校验累加和
 	static lv_obj_t* label_Err;  // 故障标签
 	static lv_style_t lv_style_src_fac; 
 	static lv_style_t lv_style_src_fac_err;
@@ -1377,9 +1395,11 @@ void fFactory_process(void)  //产测模式
 		label_Sensorsoftwareversion=lv_label_create(Src_fac,label_MainboardSoftwareversion);
 		label_PCBversion=lv_label_create(Src_fac,label_MainboardSoftwareversion);
 		label_Comletedata=lv_label_create(Src_fac,label_MainboardSoftwareversion);
-		lv_obj_set_pos(label_Sensorsoftwareversion,10,70);
-		lv_obj_set_pos(label_PCBversion,10,120);
-		lv_obj_set_pos(label_Comletedata,10,170);
+		label_Checksum=lv_label_create(Src_fac,label_Checksum);
+		lv_obj_set_pos(label_Sensorsoftwareversion,10,60);
+		lv_obj_set_pos(label_PCBversion,10,100);
+		lv_obj_set_pos(label_Comletedata,10,140);
+		lv_obj_set_pos(label_Checksum,10,180);
 		lv_style_src_fac.text.opa = 0;
 		label_Err=lv_label_create(Src_fac,label_MainboardSoftwareversion);
 		lv_obj_set_style(label_Err,&lv_style_src_fac_err); // 设置style.
@@ -1431,6 +1451,13 @@ void fFactory_process(void)  //产测模式
 			lv_label_set_array_text(label_Sensorsoftwareversion,&table_SensorsoftwareVer[0],14);
 			lv_label_set_static_text(label_PCBversion,PCBVer);
 			lv_label_set_static_text(label_Comletedata,CompleteData);
+			strcpy(&table_Checksum[0],"Checksum:0x");
+			
+			table_Checksum[11] = fget_char((Sys.Applicationchecksum >>12)&0x000f);
+			table_Checksum[12] = fget_char((Sys.Applicationchecksum >>8)&0x000f);
+			table_Checksum[13] = fget_char((Sys.Applicationchecksum >>4)&0x000f);
+			table_Checksum[14] = fget_char((Sys.Applicationchecksum >>0)&0x000f);
+			lv_label_set_array_text(label_Checksum,&table_Checksum[0],15);
 			lv_style_src_fac.text.opa = 255;
 		}
 		
@@ -2995,9 +3022,12 @@ void fFilter_Cal(void) //滤网寿命计算
 
 void fBoard_Sensordatahandle(void)
 {
+	timer_status_t timer125us;
 	u8 i = 0;
+	static u8 Cnt = 0;
 	volatile u16 tvoctmp;
 	volatile u16 PM25tmp;
+	static u8  tmp =10;
 	i = Sys.comm.rxdata[2];
 	if(Sys.comm.rxdata[0]==0x5f && Sys.comm.rxdata[1]==0x50 && Sys.comm.rxdata[i-1]==Sys.comm.rxdatasum)
 	{
@@ -3032,11 +3062,20 @@ void fBoard_Sensordatahandle(void)
 		PM25tmp = (Sys.comm.rxdata[9]<<8)|Sys.comm.rxdata[10];
 		Sys.Tempvalue = ((s8)(Sys.comm.rxdata[11]-20));
 		Sys.Humivalue = Sys.comm.rxdata[12];
+		R_GPT_StatusGet(&g_timer0_125us_ctrl,&timer125us);
+		
+		Cnt++;
+		if(Cnt>=10)
+		{
+			Cnt = 0;
+			tmp =  (timer125us.counter%6)+5;
+		}
 		Sys.tvocvalue =1;
 		tvoctmp= (Sys.comm.rxdata[13])|Sys.comm.rxdata[14]<<8;
 		if(PM25tmp==0)
-			PM25tmp=1;
-		Sys.pm25value = PM25tmp;
+			Sys.pm25value=1;
+		 else
+		 	Sys.pm25value= (PM25tmp+tmp);
 		if(tvoctmp==3)
 			Sys.tvocvalue = 2;
 		else if(tvoctmp==7)
@@ -3696,7 +3735,7 @@ void fFlashdata_read(void)
 				Sys.power = g_src[i++];
 			if(Sys.power==1)
 			{
-				Sys.Warnup_Cnt=301; // 掉电记忆是开机直接跳过30秒预热
+				Sys.Warnup_Cnt=0; // 掉电记忆是开机直接跳过30秒预热
 				Sys.opmode = g_src[i++];
 
 				Sys.Speed.gear = g_src[i++];
@@ -3765,6 +3804,16 @@ void fFlashdata_deal(void)
 }
 void fDeviceData_Init(void)
 {
+	u8 i = 0;
+	u32 p =0x00000000; //从bootloader区域开始读取
+	
+	while (1)
+	{
+		
+		Sys.Applicationchecksum += *(u8 *)(p);
+		if(++p==0x80000)  //512kb
+			break;
+	}
 	Sys.opmode = emodeAuto;
 	Sys.Speed.gear = 0;
 	Sys.Filter.maxhour = 3000;
@@ -4044,6 +4093,13 @@ void KeyTouch_Init(void)
 8.修复滤网复位之后无法跳转到正常显示的函数的bug.
 9.修复开机关机时候，PM25和TVOC显示01 然后显示---的bug。
 10.修复霍尔和掉电记忆冲突造成的灯闪烁的问题。  0307 V1 到此为止
+
+
+2022.03.09
+1.打EFT 测试 风速和睡眠按键太灵敏  调灵敏值.
+2.产测里面增加软件校验和的显示.
+3.对于传感器传过来的PM25数据，增加处理.
+4.现在掉电记忆之前是开机状态的，不会跳过30S初始化时间.
 */
 void hal_entry(void)
 {

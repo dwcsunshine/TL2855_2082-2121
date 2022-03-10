@@ -20,7 +20,7 @@
 extern volatile bool g_transfer_complete;
 
 
-#define CompleteData "Data:2022.03.07"
+#define CompleteData "Data:2022.03.09"
 #define MainBoardVer "MainBoard Ver:0.0.1"
 #define PCBVer "PCB Ver:3.0"
 
@@ -278,6 +278,7 @@ extern FG_DEF FG;
 
 typedef struct
 {
+	u16 Applicationchecksum;
 	u8 KeyTouchinit;
 	u8 flowcnt;
 	u8 testflg;

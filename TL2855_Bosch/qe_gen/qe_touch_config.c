@@ -145,8 +145,8 @@ const touch_button_cfg_t g_qe_touch_button_cfg_config01[] =
     /* sleep */
     {
         .elem_index = 3,
-        .threshold  = 324,
-        .hysteresis = 16,
+        .threshold  = 400,
+        .hysteresis = 20,
     },
     /* timer */
     {
@@ -157,8 +157,8 @@ const touch_button_cfg_t g_qe_touch_button_cfg_config01[] =
     /* speed */
     {
         .elem_index = 5,
-        .threshold  = 354,
-        .hysteresis = 17,
+        .threshold  = 450,
+        .hysteresis = 22,
     },
 };
 #endif

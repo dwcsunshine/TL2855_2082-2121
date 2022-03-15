@@ -3027,7 +3027,6 @@ void fBoard_Sensordatahandle(void)
 	static u8 Cnt = 0;
 	volatile u16 tvoctmp;
 	volatile u16 PM25tmp;
-	static u8  tmp =10;
 	i = Sys.comm.rxdata[2];
 	if(Sys.comm.rxdata[0]==0x5f && Sys.comm.rxdata[1]==0x50 && Sys.comm.rxdata[i-1]==Sys.comm.rxdatasum)
 	{
@@ -3064,18 +3063,13 @@ void fBoard_Sensordatahandle(void)
 		Sys.Humivalue = Sys.comm.rxdata[12];
 		R_GPT_StatusGet(&g_timer0_125us_ctrl,&timer125us);
 		
-		Cnt++;
-		if(Cnt>=10)
-		{
-			Cnt = 0;
-			tmp =  (timer125us.counter%6)+5;
-		}
+	
 		Sys.tvocvalue =1;
 		tvoctmp= (Sys.comm.rxdata[13])|Sys.comm.rxdata[14]<<8;
 		if(PM25tmp==0)
 			Sys.pm25value=1;
 		 else
-		 	Sys.pm25value= (PM25tmp+tmp);
+		 	Sys.pm25value= (PM25tmp);
 		if(tvoctmp==3)
 			Sys.tvocvalue = 2;
 		else if(tvoctmp==7)
@@ -3224,23 +3218,23 @@ void fMotor_ctrl(void)
 				if(sErr_30s>=(Sys.Factoryflg!=0?100:300))
 				{
 					sErr_30s = 300;
-					Sys.Errcode |=0x01;  // 5S之内没达到100转 风机故障
+					Sys.Errcode |=ERR_FAN;  // 10S或者30S之内没达到100转 风机故障
 				}
 			}
 			else   // 风速正常 计数清除
 				sErr_30s = 0;
 
-			if(abs(Sys.Speed.Target- Sys.Speed.FeedBack)>=50 && Sys.Speed.Target!= 0)  //产测下30S，正常50S 或者风速差大于50 报风机故障
-			{
-				sErr_30s_1++;
-				if(sErr_30s_1>=(Sys.Factoryflg!=0?300:500))
-				{
-					sErr_30s_1 = 500;
-					Sys.Errcode |=0x01;  // 5S之内没达到100转 风机故障
-				}
-			}
-			else   // 风速正常 计数清除
-				sErr_30s_1 = 0;
+			// if(abs(Sys.Speed.Target- Sys.Speed.FeedBack)>=50 && Sys.Speed.Target!= 0)  //产测下30S，正常50S 或者风速差大于50 报风机故障
+			// {
+			// 	sErr_30s_1++;
+			// 	if(sErr_30s_1>=(Sys.Factoryflg!=0?300:500))
+			// 	{
+			// 		sErr_30s_1 = 500;
+			// 		Sys.Errcode |=0x01;  // 
+			// 	}
+			// }
+			// else   // 风速正常 计数清除
+			// 	sErr_30s_1 = 0;
 
 			switch (Sys.opmode)
 			{
@@ -4100,6 +4094,11 @@ void KeyTouch_Init(void)
 2.产测里面增加软件校验和的显示.
 3.对于传感器传过来的PM25数据，增加处理.
 4.现在掉电记忆之前是开机状态的，不会跳过30S初始化时间.
+
+2022.03.15
+1.取消3.9号 对于传感器PM25的增加处理.
+2.电机故障检测取消失速故障.
+3.日期更新为0315
 */
 void hal_entry(void)
 {

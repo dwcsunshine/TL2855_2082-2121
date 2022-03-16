@@ -3007,7 +3007,7 @@ void fFanFeedBackCalc(void)
 
 void fFilter_Cal(void) //滤网寿命计算
 {
-	if(Sys.power&&(Sys.Errcode&(ERR_COMM|ERR_FAN|ERR_HALL|ERR_Filterlock) == 0) ) //开机并且风机运行的情况下
+	if(Sys.power&&((Sys.Errcode&(ERR_COMM|ERR_FAN|ERR_HALL|ERR_Filterlock)) == 0 )) //开机并且风机运行的情况下
 	{
 		if(++Sys.Filter.calcnt>=3600)
 		{
@@ -4099,6 +4099,9 @@ void KeyTouch_Init(void)
 1.取消3.9号 对于传感器PM25的增加处理.
 2.电机故障检测取消失速故障.
 3.日期更新为0315
+2022.03.16
+1.修复bug，修复滤网计时不计数的情况。
+2.日期变为0316
 */
 void hal_entry(void)
 {

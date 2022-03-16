@@ -10,8 +10,8 @@
       <TargetName>TL2855_Bosch</TargetName>
       <ToolsetNumber>0x4</ToolsetNumber>
       <ToolsetName>ARM-ADS</ToolsetName>
-      <pArmCC>6140001::V6.14.1::.\ARMCompiler6.14.1</pArmCC>
-      <pCCUsed>6140001::V6.14.1::.\ARMCompiler6.14.1</pCCUsed>
+      <pArmCC>6170000::V6.17::.\ArmCompilerforEmbedded6.17</pArmCC>
+      <pCCUsed>6170000::V6.17::.\ArmCompilerforEmbedded6.17</pCCUsed>
       <uAC6>1</uAC6>
       <TargetOption>
         <TargetCommonOption>
@@ -331,8 +331,8 @@
             <useXO>0</useXO>
             <v6Lang>3</v6Lang>
             <v6LangP>3</v6LangP>
-            <vShortEn>0</vShortEn>
-            <vShortWch>0</vShortWch>
+            <vShortEn>1</vShortEn>
+            <vShortWch>1</vShortWch>
             <v6Lto>0</v6Lto>
             <v6WtE>0</v6WtE>
             <v6Rtti>0</v6Rtti>
@@ -340,7 +340,7 @@
               <MiscControls>-Wno-license-management -Wunused -Wuninitialized -Wall -Wextra -Wmissing-declarations -Wconversion -Wpointer-arith -Wshadow -Waggregate-return -Wfloat-equal</MiscControls>
               <Define>QE_TOUCH_CONFIGURATION</Define>
               <Undefine></Undefine>
-              <IncludePath>.\ra;.\ra_cfg;.\ra_gen;.\src;.\GUI\lvgl;.\GUI;.\GUI\lvgl_driver;.\GUI\lv_examples;.\qe_gen</IncludePath>
+              <IncludePath>.\ra;.\ra_cfg;.\ra_gen;.\src;.\GUI\lvgl;.\GUI;.\GUI\lvgl_driver;.\GUI\lv_examples;.\qe_gen;.\pmlibrary</IncludePath>
             </VariousControls>
           </Cads>
           <Aads>
@@ -883,6 +883,26 @@
               <FileName>qe_touch_sample.c</FileName>
               <FileType>1</FileType>
               <FilePath>.\qe_gen\qe_touch_sample.c</FilePath>
+            </File>
+          </Files>
+        </Group>
+        <Group>
+          <GroupName>pmlibrary</GroupName>
+          <Files>
+            <File>
+              <FileName>pmLib.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>.\pmlibrary\pmLib.h</FilePath>
+            </File>
+            <File>
+              <FileName>pmlibrary_NALA.lib</FileName>
+              <FileType>4</FileType>
+              <FilePath>.\pmlibrary\pmlibrary_NALA.lib</FilePath>
+            </File>
+            <File>
+              <FileName>使用说明.txt</FileName>
+              <FileType>5</FileType>
+              <FilePath>.\pmlibrary\使用说明.txt</FilePath>
             </File>
           </Files>
         </Group>

@@ -27,6 +27,7 @@ extern volatile bool g_transfer_complete;
 
 
 #define PM25LIB (1)
+#define Pin_CheckPM25  (R_PORT2->PIDR_b.PIDR1)
 typedef uint8_t u8;
 typedef uint16_t  u16;
 typedef unsigned int  u32;

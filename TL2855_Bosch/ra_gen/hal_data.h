@@ -15,6 +15,8 @@
 #include "r_dtc.h"
 #include "r_transfer_api.h"
 #include "r_spi.h"
+#include "lvgl.h"
+#include "lv_conf.h"
 #include "hal_entry.h"
 FSP_HEADER
 /* Flash on Flash HP Instance */

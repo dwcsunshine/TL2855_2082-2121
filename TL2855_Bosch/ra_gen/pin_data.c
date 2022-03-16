@@ -73,6 +73,10 @@ const ioport_pin_cfg_t g_bsp_pin_cfg_data[] = {
         .pin_cfg = ((uint32_t) IOPORT_CFG_PORT_DIRECTION_INPUT)
     },
     {
+        .pin = BSP_IO_PORT_02_PIN_01,
+        .pin_cfg = ((uint32_t) IOPORT_CFG_PORT_DIRECTION_INPUT)
+    },
+    {
         .pin = BSP_IO_PORT_02_PIN_05,
         .pin_cfg = ((uint32_t) IOPORT_CFG_DRIVE_MID | (uint32_t) IOPORT_CFG_PERIPHERAL_PIN | (uint32_t) IOPORT_PERIPHERAL_GPT1)
     },

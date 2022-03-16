@@ -5,7 +5,7 @@
 #include "lv_tests\lv_test_theme\lv_test_theme_2.h"
 #include "lv_tests\lv_test_theme\lv_test_theme_2.h"
 #include "hal_entry.h"
-
+#include "pmLib.h"
 bordecommdef boarduart;
 Sys_str	Sys;  // 系统标志位等等参数
 FG_DEF FG;
@@ -1208,8 +1208,8 @@ void Filter_reset_animation(void)
 		Label_style_pic_OK.text.opa -=11;
 		Label_style_pic_filter.text.opa+=11;
 		bar1_style_bg.body.opa += 11;
-		bar1_style_indic.body.opa += 11;
 		if(Lvgl.Filtercnt==2600)
+		bar1_style_indic.body.opa += 11;
 		{
 			Label_style_pic_OK.text.opa =0;
 			Label_style_pic_filter.text.opa =255;
@@ -3066,10 +3066,10 @@ void fBoard_Sensordatahandle(void)
 	
 		Sys.tvocvalue =1;
 		tvoctmp= (Sys.comm.rxdata[13])|Sys.comm.rxdata[14]<<8;
-		if(PM25tmp==0)
-			Sys.pm25value=1;
-		 else
-		 	Sys.pm25value= (PM25tmp);
+		// if(PM25tmp==0)
+		// 	Sys.pm25value=1;
+		//  else
+		//  	Sys.pm25value= (PM25tmp);
 		if(tvoctmp==3)
 			Sys.tvocvalue = 2;
 		else if(tvoctmp==7)
@@ -4015,7 +4015,115 @@ void KeyTouch_Init(void)
 
 	Sys.KeyTouchinit = 0;
 }
+void fParticleGet(void) //获取微粒传感器数据
+{
+	u16 volatile PM25value = 0;
+	#if PM25LIB
+	{
 
+		if(Sys.power == 1)  // 开机状态
+		{
+			pmCalculate();  // PM2.5传感器使用 per1S 或者IAI	
+			PM25value=pmGetPM25Value();
+			if(PM25value>=500)
+				PM25value = 500;
+			if(PM25value ==0)
+				PM25value = 1;
+
+			Sys.pm25value = PM25value;
+		
+		}
+		
+	}
+	#else
+	{
+		static u8 DustErrCnt = 0;
+		if(DI.Port3_air.para2.power == 0)//关机时不作处理
+		{
+			fFactory_ParticleInit();  //开机之后复位
+			return;//因为关机后灰尘传感器会断电
+		}
+
+	
+		//更新数组，并求出数组的和，下面的方法可以提高效率
+		//求出P1的值
+		Particle.P1TotalTime -= Particle.P1TBuf[Particle.Index];//减去旧值
+		if(Pin_CheckPWRPM25)
+		{
+			Particle.P1TBuf[Particle.Index] = 0;//重新赋值
+		}
+		else
+		{
+			Particle.P1TBuf[Particle.Index] = Particle.P1Time;//重新赋值
+		}
+		Particle.P1TotalTime += Particle.P1TBuf[Particle.Index];//加上新值
+		Particle.P1Time = 0;//清零时间
+
+		
+
+		if(++Particle.Index >= 30)//循环计数
+			Particle.Index = 0;
+
+	//	if(Sys.Warmup30s_Cnt<=300)  //初始40S  不判断灰尘传感器的等级
+//		{
+//			return;
+//		}
+
+//		if(!Err.B.Dust) //故障之后无需再进行检测
+//		{
+//			if((Particle.P1TotalTime > 150000)||(Particle.P1TotalTime == 0))
+//			{
+//				if(DustErrCnt < (SelfTest?30:120) ) //两分钟 延长时间
+//					DustErrCnt++;
+//				else
+//					Err.B.Dust= 1;
+//			}
+//			else
+//			{
+//				DustErrCnt = 0;
+//			}
+//		}
+		fCalculate_PM25(Particle.P1TotalTime);
+	}
+
+	
+	Particle.P1_Up2sCnt++;
+	{
+		if(Particle.P1_Up2sCnt>=10)
+		{
+			Particle.P1_Up2sCnt = 10;
+			if(DI.Port3_air.para10.pm25 >= tPM25[market][Sys.AQI_LEVEL][1])
+				{
+					if(Sys.AQI_LEVEL<3)
+					{
+						Sys.AQI_LEVEL++;
+						Particle.P1_Up2sCnt = 0;
+					}
+					else
+					{
+						Sys.AQI_LEVEL =3 ;
+					}
+				}
+				else if(DI.Port3_air.para10.pm25 <= tPM25[market][Sys.AQI_LEVEL][0])
+				{
+					if(Sys.AQI_LEVEL>0)
+					{
+						Sys.AQI_LEVEL--;
+						Particle.P1_Up2sCnt = 0;
+					}
+					else
+					{
+						Sys.AQI_LEVEL = 0;
+					}
+				}
+			
+		}
+	}
+	#endif
+//	
+	
+
+}
 
 /*
 2022.01.16
@@ -4099,6 +4207,8 @@ void KeyTouch_Init(void)
 1.取消3.9号 对于传感器PM25的增加处理.
 2.电机故障检测取消失速故障.
 3.日期更新为0315
+
+4.现在PM25传感器的获取由显示板直接获得.
 */
 void hal_entry(void)
 {
@@ -4118,12 +4228,12 @@ void hal_entry(void)
 	__enable_irq();
 	KeyTouch_Init();  //按键初始化
 	fFlashdata_read();
-	
+	pmInit(POLLUTION_MARKET,90,273); // PM2.5传感器初始化
 	#ifdef TEST
 	fFactory_process();
 	fKey_Process();
 	#endif
-
+	
 	while(1)
 	{
 		Lvgl.Taskcomplete = 0;
@@ -4144,7 +4254,7 @@ void hal_entry(void)
 		{
 			gTime1sflg = 0;
 			fFilter_Cal();  //滤网寿命计算
-			
+			fParticleGet();
 			// fLCD_reinit();
 		}
 	}
@@ -4158,6 +4268,28 @@ void hal_entry(void)
 
 void Timer0_125us_callback (timer_callback_args_t * p_args)
 {
+	#if PM25LIB
+	{
+		u8 static Cnt=0;
+		if(Sys.Factoryflg == 0)
+		{
+			Cnt++;
+			if(Cnt>=4)  //使用PM2.5库的话 每500us使用
+			{
+				Cnt = 0;
+				pmScan(Pin_CheckPM25);
+			}
+		}
+	}
+	#else
+	{
+		;
+		// if(0 == Pin_CheckPM25)
+		// {
+		// 	Particle.P1Time++;
+		// }
+	}
+	#endif
 	fFanFeedBackCalc();
 	fDisp_LedDriver();
 }

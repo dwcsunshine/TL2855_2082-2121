@@ -327,6 +327,7 @@ typedef struct
 		u16 accumulatedhour;
 		u16 calcnt;
 		u8 percentage; // 滤网百分比
+		u8 dispflg; // 滤网时间到显示滤网百分比
 	} Filter;
 	struct
 	{

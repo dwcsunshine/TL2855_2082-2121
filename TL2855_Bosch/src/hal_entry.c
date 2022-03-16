@@ -924,6 +924,12 @@ void Filter_display(void)  //滤网寿命显示
 	
 	if(++Lvgl.Filtercnt>=3000)
 	{
+		if(Sys.Filter.dispflg&&(Sys.Errcode&ERR_Filterlock))
+		{
+			Lvgl.Filtercnt = 3000;
+			return;
+		}
+		
 		if(Lvgl.Lastpfunction==Normal_Display) //正常模式显示界面
 			Main_screen_display();
 		else if(Lvgl.Lastpfunction==sleep_screen)   //睡眠模式显示界面
@@ -2268,6 +2274,8 @@ void fTurn_off(void)
 	{
 		Lvgl.Curpfunction=Turn_On_Animation;
 	}
+	if(Sys.Filter.dispflg == 0) //每次关机都打开滤网时间到的常显标志
+		Sys.Filter.dispflg = 1;
 	Lvgl.cnt = 0;
 	Main_screen_clean();
 	img_style_sleep.image.opa = 0;
@@ -2278,6 +2286,7 @@ void fTurn_off(void)
 
 void fLogic_ctrl(void)  //常用的一些逻辑判断  10MS loop
 {
+	
 	if(Sys.Errcode&ERR_HALL && Sys.Factoryflg==0 && Sys.KeyTouchinit==0) //产测模式可以继续执行 按键初始化完成
 	{
 		
@@ -2807,11 +2816,20 @@ void fKey_Process(void) //T =6ms
 			if(KeyStatus & KEY_ShortPress)
 			{
 				KeyStatus&=~KEY_ShortPress;
-				if((Lvgl.Curpfunction != Filter_display) && (Lvgl.Curpfunction != Filter_reset_animation)&&(Lvgl.Curpfunction != Turn_On_Animation))
+				// if((Lvgl.Curpfunction != Filter_display) && (Lvgl.Curpfunction != Filter_reset_animation)&&(Lvgl.Curpfunction != Turn_On_Animation))
+				if((Lvgl.Curpfunction != Turn_On_Animation)&&(Lvgl.Curpfunction != Filter_display))
 				{
-					Lvgl.Lastpfunction_InFilter = Lvgl.Curpfunction;
+					if(Lvgl.Curpfunction != Filter_reset_animation)
+						Lvgl.Lastpfunction_InFilter = Lvgl.Curpfunction;
 					Lvgl.Filtercnt = 0;
 					Lvgl.Curpfunction = Filter_display;
+				}
+				else if(Lvgl.Curpfunction == Filter_display)
+				{
+					if(Sys.Filter.dispflg&&(Sys.Errcode&ERR_Filterlock))
+					{
+						Sys.Filter.dispflg = 0;
+					}
 				}
 				Buz_Beep ();
 			}
@@ -2820,9 +2838,11 @@ void fKey_Process(void) //T =6ms
 			{
 				KeyStatus &=~KEY_LongOnce;
 
-				if((Lvgl.Curpfunction != Filter_reset_animation) &&(Lvgl.Curpfunction != Filter_display)&&(Lvgl.Curpfunction != Turn_On_Animation))
+				// if((Lvgl.Curpfunction != Filter_reset_animation) &&(Lvgl.Curpfunction != Filter_display)&&(Lvgl.Curpfunction != Turn_On_Animation))
+				if((Lvgl.Curpfunction != Turn_On_Animation)&&(Lvgl.Curpfunction != Filter_reset_animation))
 				{
-					Lvgl.Lastpfunction_InFilter = Lvgl.Curpfunction;
+					if(Lvgl.Curpfunction != Filter_display)
+						Lvgl.Lastpfunction_InFilter = Lvgl.Curpfunction;
 					Lvgl.Filtercnt = 0;
 					Lvgl.Curpfunction = Filter_reset_animation;
 					Sys.Filter.accumulatedhour = 0; //
@@ -2885,7 +2905,7 @@ void fKey_Process(void) //T =6ms
 					}
 					else
 					{
-						if(Sys.Errcode|(ERR_FAN|ERR_Filterlock))
+						if((Sys.Errcode&(ERR_FAN))==0)  // 非停风机故障的情况下
 						{
 							Sys.Speed.gear++;
 							if(Sys.Speed.gear>espd5)
@@ -3016,6 +3036,23 @@ void fFilter_Cal(void) //滤网寿命计算
 				Sys.Filter.accumulatedhour++;
 		}
 
+	}
+	if(Sys.Filter.accumulatedhour>=Sys.Filter.maxhour)
+	{
+		Sys.Errcode |=ERR_Filterlock;
+		Sys.Filter.accumulatedhour = Sys.Filter.maxhour;
+	}
+	else
+		Sys.Errcode &=~ERR_Filterlock;
+	if(Sys.Filter.dispflg&&(Sys.Errcode&ERR_Filterlock))
+	{
+		if((Lvgl.Curpfunction != Turn_On_Animation)&&(Lvgl.Curpfunction != Filter_display))
+		{
+			if(Lvgl.Curpfunction != Filter_reset_animation)
+				Lvgl.Lastpfunction_InFilter = Lvgl.Curpfunction;
+			Lvgl.Filtercnt = 0;
+			Lvgl.Curpfunction = Filter_display;
+		}
 	}
 	Sys.Filter.percentage = 100-(Sys.Filter.accumulatedhour*100/Sys.Filter.maxhour);
 }
@@ -3198,7 +3235,7 @@ void fMotor_ctrl(void)
 		break;
 
 	}
-	if(Sys.Errcode&(ERR_COMM|ERR_FAN|ERR_HALL|ERR_Filterlock))  //风机故障 或者 锁机的情况下
+	if(Sys.Errcode&(ERR_COMM|ERR_FAN|ERR_HALL))  //风机故障 或者其他故障的情况下
 	{
 		PWR_MOTOR_DIS();
 		Motorpara.Spd_Output[0] = Motorpara.Spd_Off[0];
@@ -3316,7 +3353,7 @@ void fMotor_ctrl(void)
 		}
 	}
 
-	if((Sys.Errcode&(ERR_COMM|ERR_FAN|ERR_HALL|ERR_Filterlock))==0 && Sys.power) //开机并且没有错误的情况下
+	if((Sys.Errcode&(ERR_COMM|ERR_FAN|ERR_HALL))==0 && Sys.power) //开机并且没有故障的情况下
 	{
 		Sys.Speed.Target = Motorpara.Spd_Output[0];
 		//这里还应该需要添加失速计数，但是规格书里没看到失速保护
@@ -3825,6 +3862,7 @@ void fDeviceData_Init(void)
 	Sys.Sleep3S_Cnt = SLEEP3S_CNT;
 	Sys.Errcode |=ERR_HALL;
 	Sys.KeyTouchinit = 1;
+	Sys.Filter.dispflg = 1; //默认开启强制显示
 }
 
 
@@ -4102,6 +4140,10 @@ void KeyTouch_Init(void)
 2022.03.16
 1.修复bug，修复滤网计时不计数的情况。
 2.日期变为0316
+3.滤网到期部分按照规格书来写.
+4.修复滤网计时超限的问题.
+5.现在滤网报警时候，风机不会停.
+6.现在滤网复位和滤网显示可以相互进入.
 */
 void hal_entry(void)
 {

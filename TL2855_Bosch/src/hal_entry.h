@@ -20,9 +20,9 @@
 extern volatile bool g_transfer_complete;
 
 
-#define CompleteData "Data:2022.03.15"
+#define CompleteData "Data:2022.03.17"
 #define MainBoardVer "MainBoard Ver:0.0.1"
-#define PCBVer "PCB Ver:3.0"
+#define PCBVer "PCB Ver:4.0"
 
 
 
@@ -328,6 +328,7 @@ typedef struct
 		u16 accumulatedhour;
 		u16 calcnt;
 		u8 percentage; // 滤网百分比
+		u8 dispflg; // 滤网时间到显示滤网百分比
 	} Filter;
 	struct
 	{

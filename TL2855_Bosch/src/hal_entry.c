@@ -564,7 +564,7 @@ void Task_Sensordatacreate(void)
 		
 		src1_style_Mainscreen_Bigstyle.text.opa = 0;
 	}
-	if(Sys.Warnup_Cnt<=300)  // 30S预热时间内显示
+	if(Sys.Warnup_Cnt<=320)  // 30S预热时间内显示
 	{
 		lv_label_set_array_text(label_tvocvalue,"- - -",5);
 		lv_label_set_array_text(label_pm25value,"- - -",5);
@@ -1801,7 +1801,7 @@ void Normal_Display(void)  //正常显示
 			lv_label_set_text(label_humi,"\xEE\x98\x87-\xEE\x98\x84");
 			lv_label_set_text(label_temperature,"\xEE\x98\x88-\xEE\x98\x82");
 		}
-		if(Sys.Warnup_Cnt<=300)  // 30S预热时间内显示
+		if(Sys.Warnup_Cnt<=320)  // 30S预热时间内显示
 		{
 			lv_label_set_array_text(label_tvocvalue,"- - -",5);
 			lv_label_set_array_text(label_pm25value,"- - -",5);
@@ -2323,7 +2323,7 @@ void fTurn_off(void)
 void fLogic_ctrl(void)  //常用的一些逻辑判断  10MS loop
 {
 	
-	if(Sys.Errcode&ERR_HALL && Sys.Factoryflg==0 && Sys.KeyTouchinit==0) //产测模式可以继续执行 按键初始化完成
+	if(Sys.Errcode&ERR_HALL && Sys.Factoryflg==0) //产测模式可以继续执行 按键初始化完成
 	{
 		
 		if(Sys.power)
@@ -3251,7 +3251,7 @@ void fMotor_ctrl(void)
 	switch (Sys.opmode)
 	{
 	case emodeAuto:
-		if(Sys.Warnup_Cnt<=300)  //预热30S之内风速保持最低挡位
+		if(Sys.Warnup_Cnt<=320)  //预热30S之内风速保持最低挡位
 		{
 			Sys.Speed.gearreal = 0;
 		}
@@ -3312,7 +3312,7 @@ void fMotor_ctrl(void)
 			switch (Sys.opmode)
 			{
 			case emodeAuto:
-				if(Sys.Warnup_Cnt<=300)  //预热30S之内风速保持最低挡位
+				if(Sys.Warnup_Cnt<=320)  //预热30S之内风速保持最低挡位
 				{
 					Motorpara.Spd_Output[0] = tAuto_Spd[0];
 					Sys.Speed.gearreal = 0;
@@ -3442,11 +3442,14 @@ void fMotor_ctrl(void)
 		Sys.Speed.PrePutOut = 6000;//可以提高启动速度
 		Sys.Speed.PutOut = SPDOFF;
 		Sys.Speed.Reference = Sys.Speed.FeedBack;
+		if(Sys.Speed.Reference>2000)
+			Sys.Speed.Reference = 0;
 
 	}
 	R_GPT_DutyCycleSet(&g_motor_pwm_ctrl,Sys.Speed.PutOut,GPT_IO_PIN_GTIOCA);
 
 }
+
 void fDisp_LedDriver(void) // LED驱动控制 125us
 {
 	static uint8_t Duty_Cnt =0;
@@ -3463,7 +3466,7 @@ void fDisp_LedDriver(void) // LED驱动控制 125us
 	static u16 sBreath_dutyset=0;
 	static u8 sBreath_dutycnt=0;
 	volatile u16 sBreath_dutytmp = 0;
-	if(Sys.Factoryflg ||Sys.KeyTouchinit!=0)  // 产测模式下不执行 按键未初始化完成
+	if(Sys.Factoryflg ||Sys.Initcomplete==0)  // 产测模式下不执行 初始化未完成不执行
 		return;
 	LED_key_all_off();
 	if(Sys.power)
@@ -3557,15 +3560,15 @@ void fDisp_LedDriver(void) // LED驱动控制 125us
 		gAQIduty_Blue = 100;
 		break;
 	case 1:
-		gAQIduty_Red  = 50;
+		gAQIduty_Red  = 67;
 		gAQIduty_Green   =12;
 		gAQIduty_Blue = 96;
 
 		break;
 	case 2:
 
-		gAQIduty_Red  = 80;
-		gAQIduty_Green   =100;
+		gAQIduty_Red  = 100;
+		gAQIduty_Green   =30;
 		gAQIduty_Blue = 0;
 
 		break;
@@ -3630,11 +3633,23 @@ void fDisp_LedDriver(void) // LED驱动控制 125us
 	if(Sys.power == 0 || Sys.AQI_DISABLE ||Sys.opmode==emodeSleep)  //工厂产测模 或者AQI关 或者睡眠模式下LED全部关闭
 	{
 		LED_RGB_ALLOFF();
+		Sys.leddelaycnt = 0;
 		return;
 	}
 	else
 	{
-
+		if(++Duty_Cnt>100)  // 一个周期完成 DIM需要在完整周期时候调整 不然怕混色不均匀
+		{
+			Duty_Cnt = 0;
+		}
+		if(++Sys.leddelaycnt>=4000)  //0.5S
+		{
+			Sys.leddelaycnt = 4000;
+		}
+		else
+		{
+			return;
+		}
 		if(Duty_Cnt<=gAQIduty_Redtmp&&gAQIduty_Redtmp>0) //占空比计数时间大于0 并且小于等于所占比例数的时候，开启相应的灯光
 		{
 			LED_RGB_RED_ON ();
@@ -3663,12 +3678,6 @@ void fDisp_LedDriver(void) // LED驱动控制 125us
 		{
 			LED_RGB_GREEN_OFF ();
 		}
-		if(++Duty_Cnt>100)  // 一个周期完成 DIM需要在完整周期时候调整 不然怕混色不均匀
-		{
-			Duty_Cnt = 0;
-		}
-
-
 
 	}
 
@@ -3700,12 +3709,20 @@ void fDisp_Init(void)
 	src1_style_2nd.text.font = &my_font_icon_B;
 
 
-	Lvgl.Initcomplete = 1; // 初始化完毕 可以执行任务了
+	
 
 	Task_Childlockcreate();
 	Task_Timercreate();
 	Task_Wificreate();
 
+}
+void Sys_start(void)
+{
+	
+	R_GPT_Start (&g_timer0_125us_ctrl);
+	R_GPT_Start (&g_motor_pwm_ctrl);
+	R_GPT_DutyCycleSet(&g_motor_pwm_ctrl,SPDOFF,GPT_IO_PIN_GTIOCA);
+	Sys.Initcomplete = 1; // 初始化完毕 可以执行任务了
 }
 void  Sys_Init(void) //系统初始化函数
 {
@@ -3718,6 +3735,7 @@ void  Sys_Init(void) //系统初始化函数
 
 
 	R_GPT_Open (&g_timer1_ctrl,&g_timer1_cfg); // 1ms
+	R_GPT_Start (&g_timer1_ctrl);
 	R_DMAC_Open(&g_transfer_ctrl, &g_transfer_cfg);
 	/* Enable the DMAC so that it responds to transfer requests. */
 	R_DMAC_Enable(&g_transfer_ctrl);
@@ -3729,8 +3747,7 @@ void  Sys_Init(void) //系统初始化函数
 
 	R_GPT_Open (&g_motor_pwm_ctrl,&g_motor_pwm_cfg); // 电机驱动pwm
 	R_GPT_DutyCycleSet(&g_motor_pwm_ctrl,SPDOFF,GPT_IO_PIN_GTIOCA);
-	R_GPT_Start (&g_motor_pwm_ctrl);
-	R_GPT_DutyCycleSet(&g_motor_pwm_ctrl,SPDOFF,GPT_IO_PIN_GTIOCA);
+	
 
 
 	// R_GPT_Open (&g_Buzz_pwm_ctrl,&g_Buzz_pwm_cfg); // 电机驱动pwm
@@ -3902,7 +3919,6 @@ void fDeviceData_Init(void)
 	Sys.comm.confirmcnt = 4;
 	Sys.Sleep3S_Cnt = SLEEP3S_CNT;
 	Sys.Errcode |=ERR_HALL;
-	Sys.KeyTouchinit = 1;
 	Sys.Filter.dispflg = 1; //默认开启强制显示
 }
 
@@ -3910,7 +3926,7 @@ void fDeviceData_Init(void)
 void fDustlevel_cal(void)
 {
 	static u8  cnt = 0;
-	if(Sys.Warnup_Cnt<300)
+	if(Sys.Warnup_Cnt<=320)
 	{
 		if(Sys.Warnup_Cnt%8==0 &&Sys.Warnup_Cnt>0)
 		{
@@ -3918,6 +3934,18 @@ void fDustlevel_cal(void)
 				Sys.AQI_LEVEL++;
 			else
 				Sys.AQI_LEVEL = 0;
+		}
+
+		if(Sys.Warnup_Cnt == 320)
+		{
+			for(Sys.AQI_LEVEL=0;Sys.AQI_LEVEL<3;Sys.AQI_LEVEL++)
+			{
+				if(Sys.pm25value<tAQI_table[Sys.AQI_LEVEL][1])
+				{
+					break;
+				}
+			}
+			
 		}
 		return;
 	}
@@ -4092,7 +4120,6 @@ void KeyTouch_Init(void)
 		}
 	}
 
-	Sys.KeyTouchinit = 0;
 }
 void fParticleGet(void) //获取微粒传感器数据
 {
@@ -4306,6 +4333,14 @@ void fParticleGet(void) //获取微粒传感器数据
 2022.03.29
 1.日期改为0330。
 2.修复滤网到期时候，锁键不提示的问题。
+
+2022.04.02
+1.日期改为0402
+2.修复橙色混色不正常的问题，从原来的5V改为12V之后出现的。
+3.现在三色灯光会延时0.5S开启。
+4.加强电机处理，防止个别上电电机跑飞的问题。貌似没啥头绪，只能在关机时候强化一下。
+5.现在PCB板子丝印从1.0改为1.1
+6.修复颜色轮替显示完毕之后，颜色需要一个过渡时间切换的问题。
 */
 void hal_entry(void)
 {
@@ -4319,13 +4354,11 @@ void hal_entry(void)
 	fDisp_Init();
 	Buz_Beep ();
 	fDeviceData_Init();
-	
-	R_GPT_Start (&g_timer1_ctrl);
-	R_GPT_Start (&g_timer0_125us_ctrl);
 	__enable_irq();
 	KeyTouch_Init();  //按键初始化
 	fFlashdata_read();
 	pmInit(POLLUTION_MARKET,90,273); // PM2.5传感器初始化
+	Sys_start();
 	#ifdef TEST
 	fFactory_process();
 	fKey_Process();
@@ -4397,76 +4430,79 @@ void Timer1_1ms_callback (timer_callback_args_t * p_args)
 	tim1ms_flg = 1;
 	lv_tick_inc(1); //LVGL 1MS的心跳包
 
-	if(Lvgl.Initcomplete==1) //初始化结束
+	if(Sys.Initcomplete==1) //初始化结束
 	{
 		if(Sys.Factoryflg)
 			fFactory_process();
 		else
 			(*Lvgl.Curpfunction)();
 		
-		
-	}
-	if(Sys.KeyTouchinit==0) //未调试按键
 		fKey_Process();  // 按键处理函数  键值获取大概需要5ms 时间
 
-	if(Lvgl.Curpfunction!=Filter_reset_animation)
-	{
-		if(cont1!=NULL)
+		if(Lvgl.Curpfunction!=Filter_reset_animation)
 		{
-			if(lv_obj_get_hidden (cont1)==false)
-				lv_obj_set_hidden (cont1, true);
+			if(cont1!=NULL)
+			{
+				if(lv_obj_get_hidden (cont1)==false)
+					lv_obj_set_hidden (cont1, true);
+			}
 		}
-	}
 
-	if(Lvgl.Curpfunction!=Filter_display)
-	{
-		if(cont2!=NULL)
+		if(Lvgl.Curpfunction!=Filter_display)
 		{
-			if(lv_obj_get_hidden (cont2)==false)
-				lv_obj_set_hidden (cont2, true);
+			if(cont2!=NULL)
+			{
+				if(lv_obj_get_hidden (cont2)==false)
+					lv_obj_set_hidden (cont2, true);
+			}
 		}
-	}
-
-	if((sT1mscnt%10)==0)
-	{
-		fLogic_ctrl ();
-	}
-
-	if((sT1mscnt%100)==0)
-	{
-		gTime100msflg = 0x0f;
-		if(Sys.power&&Sys.Warnup_Cnt<=600)
-			Sys.Warnup_Cnt++;
-		if(Sys.Plugin_Cnt<=600)
-			Sys.Plugin_Cnt++;
-		fTimer_excution(); //定时执行 100MS
-		fDustlevel_cal();
-
-
-	}
-
-	if((sT1mscnt%500)==0)
-	{
-		gFre1hzflashflg^=1;  //1HZ频率  0.5S取反
-		gTime500msflg = 1;
-	}
-
-	if((sT1mscnt%1000)==0)
-	{
-		gFre0_5hzflashflg ^=1;
-		gTime1sflg = 0xff;
 		
+		if((sT1mscnt%10)==0)
+		{
+			fLogic_ctrl ();
+		}
 
-	}
-	if(sT1mscnt>=8000)
-		sT1mscnt = 0;
+		if((sT1mscnt%100)==0)
+		{
+			gTime100msflg = 0x0f;
+			if(Sys.power&&Sys.Warnup_Cnt<=600)
+				Sys.Warnup_Cnt++;
+			if(Sys.Plugin_Cnt<=600)
+				Sys.Plugin_Cnt++;
+			fTimer_excution(); //定时执行 100MS
+			fDustlevel_cal();
 
-	if(Sys.Errcode&ERR_HALL)
-	{
-		if(Sys.flashing_ooh)
-			Sys.flashing_ooh--;
+
+		}
+
+		if((sT1mscnt%500)==0)
+		{
+			gFre1hzflashflg^=1;  //1HZ频率  0.5S取反
+			gTime500msflg = 1;
+		}
+
+		if((sT1mscnt%1000)==0)
+		{
+			gFre0_5hzflashflg ^=1;
+			gTime1sflg = 0xff;
+			
+
+		}
+		if(sT1mscnt>=8000)
+			sT1mscnt = 0;
+
+		if(Sys.Errcode&ERR_HALL)
+		{
+			if(Sys.flashing_ooh)
+				Sys.flashing_ooh--;
+		}
+		fBuz_Driver(); //蜂鸣器
 	}
-	fBuz_Driver(); //蜂鸣器
+	
+
+	
+	
+	
 	fBoard_Sensorcommflow(); // 主从板通讯处理
 
 }
@@ -4508,7 +4544,7 @@ void dmac_callback (dmac_callback_args_t * cb_data)
 	static u8 i = 1;
 	uint16_t height,width;
 
-	if(Lvgl.Initcomplete == 1)
+	if(Sys.Initcomplete == 1)
 	{
 		TFT_CS = 1;
 		width=area_gloable.x2-area_gloable.x1+1; 			//得到填充的宽度

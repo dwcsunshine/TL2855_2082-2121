@@ -20,9 +20,9 @@
 extern volatile bool g_transfer_complete;
 
 
-#define CompleteData "Data:2022.03.30"
+#define CompleteData "Data:2022.04.02"
 #define MainBoardVer "MainBoard Ver:0.0.1"
-#define PCBVer "PCB Ver:4.0"
+#define PCBVer "PCB Ver:1.1"
 
 
 
@@ -280,13 +280,14 @@ extern FG_DEF FG;
 typedef struct
 {
 	u16 Applicationchecksum;
-	u8 KeyTouchinit;
+	u8 Initcomplete;
 	u8 flowcnt;
 	u8 testflg;
 	u8 flashsrc[50];
 	u16 flashing_ooh;
 	u8 delaycnt;
 	u8 power;
+	u16 leddelaycnt;
 	u8 opmode;
 	u8 opmodetmp;
 	u8 LVDcheckflg;  // 低电压检测打开标志位

@@ -20,7 +20,7 @@
 extern volatile bool g_transfer_complete;
 
 
-#define CompleteData "Data:2022.03.17"
+#define CompleteData "Data:2022.03.30"
 #define MainBoardVer "MainBoard Ver:0.0.1"
 #define PCBVer "PCB Ver:4.0"
 

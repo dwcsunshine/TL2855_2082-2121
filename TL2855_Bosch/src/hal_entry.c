@@ -655,7 +655,7 @@ void Task_Timercreate(void)
 {
 	if(label_timer==NULL)
 	{
-		label_timer = lv_label_create(scr,label_auto_manual); //创建一个标签
+		label_timer = lv_label_create(scr,NULL); //创建一个标签
 		lv_label_set_long_mode (label_timer, LV_LABEL_LONG_EXPAND); //文字自动填充
 		lv_obj_set_pos(label_timer,135,10);
 		lv_label_set_style(label_timer, LV_LABEL_STYLE_MAIN, &src1_style_Mainscreen_Timer);
@@ -754,7 +754,37 @@ void Filter_display(void)  //滤网寿命显示
 	if(Lvgl.Taskcomplete)
 	{
 		lv_obj_refresh_style (scr);
+		
 	}
+	if(Sys.childlock)
+	{
+		if(Lvgl.Filtercnt%10 == 0)
+		{
+			lv_obj_refresh_style(label_childlock);
+			if(Sys.childlockcnt)
+			{
+				Sys.childlockcnt--;
+				if((Sys.childlockcnt%100)>50)
+					src1_style_Mainscreen_Lock.text.opa = 255;
+				else
+					src1_style_Mainscreen_Lock.text.opa = 0;
+			}
+			else
+			{
+				src1_style_Mainscreen_Lock.text.opa = 20;
+			}
+		}
+		
+	}
+	else
+	{
+		if(src1_style_Mainscreen_Lock.text.opa != 0)
+		{
+			src1_style_Mainscreen_Lock.text.opa = 0;
+			lv_obj_refresh_style(label_childlock);
+		}
+	}
+		
 	if(Lvgl.Filtercnt == 0)
 	{
 		if(Lvgl.Lastpfunction == Normal_Display)
@@ -777,8 +807,7 @@ void Filter_display(void)  //滤网寿命显示
 		}
 		if(Sys.Wifitimeoutcnt)
 			src1_style_Mainscreen_Wifi.text.opa = 20;
-		if(Sys.childlock)
-			src1_style_Mainscreen_Lock.text.opa = 20;
+		
 		if(Sys.Timer.setflg)
 			src1_style_Mainscreen_Timer.text.opa = 20;
 		lv_style_copy(&bar1_style_bg,&lv_style_plain_color);
@@ -926,7 +955,7 @@ void Filter_display(void)  //滤网寿命显示
 	{
 		if(Sys.Filter.dispflg&&(Sys.Errcode&ERR_Filterlock))
 		{
-			Lvgl.Filtercnt = 3000;
+			Lvgl.Filtercnt = 1;
 			return;
 		}
 		
@@ -3673,6 +3702,10 @@ void fDisp_Init(void)
 
 	Lvgl.Initcomplete = 1; // 初始化完毕 可以执行任务了
 
+	Task_Childlockcreate();
+	Task_Timercreate();
+	Task_Wificreate();
+
 }
 void  Sys_Init(void) //系统初始化函数
 {
@@ -4269,6 +4302,10 @@ void fParticleGet(void) //获取微粒传感器数据
 2022.03.17
 1.合并了0315的显示板获取PM25程序和0316的传感器版获取PM25程序，以0315的程序为基础。变更为0317的新程序，新程序以显示板来获取新程序，显示板PCB需要升级才能满足要求
 新程序需要04版本的PCB显示板。
+
+2022.03.29
+1.日期改为0330。
+2.修复滤网到期时候，锁键不提示的问题。
 */
 void hal_entry(void)
 {
@@ -4366,6 +4403,8 @@ void Timer1_1ms_callback (timer_callback_args_t * p_args)
 			fFactory_process();
 		else
 			(*Lvgl.Curpfunction)();
+		
+		
 	}
 	if(Sys.KeyTouchinit==0) //未调试按键
 		fKey_Process();  // 按键处理函数  键值获取大概需要5ms 时间

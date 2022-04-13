@@ -20,7 +20,7 @@
 extern volatile bool g_transfer_complete;
 
 
-#define CompleteData "Data:2022.04.02"
+#define CompleteData "Data:2022.04.08"
 #define MainBoardVer "MainBoard Ver:0.0.1"
 #define PCBVer "PCB Ver:1.1"
 
@@ -279,6 +279,26 @@ extern FG_DEF FG;
 
 typedef struct
 {
+	u32 P1TotalTime;
+//	u16 P1TBuf[30];
+	u16 P1Time;//p1在一个周期内低电平的时间
+//	u8 Index;
+	u8 P1Flag;//开始计时的标志
+//	u8 ErrFlag;//传感器故障标志
+//	u8 Test30sec;
+	u16 PM25; // PM2.5传感器数值
+	u16 PM25tmp; // PM2.5传感器数值
+	u16 PM25Buf[8];
+	u32 PM25Total;
+//	u8 KeepCnt;
+//	u8 Level;//灰尘等级(最终)
+//	u8 P1_Up2sCnt ;
+//	u8 P1_Down2MinCnt;
+//	u8 ErrCnt;
+} Particle_str;
+
+typedef struct
+{
 	u16 Applicationchecksum;
 	u8 Initcomplete;
 	u8 flowcnt;
@@ -287,13 +307,14 @@ typedef struct
 	u16 flashing_ooh;
 	u8 delaycnt;
 	u8 power;
-	u16 leddelaycnt;
+	u16 RGBdelaycnt;
 	u8 opmode;
 	u8 opmodetmp;
 	u8 LVDcheckflg;  // 低电压检测打开标志位
 	u8 AQI_LEVEL; //AQI等级  默认全部关闭显示灯
 	u8 AQI_DISABLE; //aqi开关
 	u8 Factoryflg;    //长按电源和灯 组合键 15S进入	响2声
+	u8 facpm25check;
 	u8 Factorysteps;  //工厂模式测试步骤
 	u8 FilterTestFlg;   //长按组合按键 开关机和模式键 15S进入 响2声
 	u16 FactoryDelaycnt; // 工厂模式下的延迟技术

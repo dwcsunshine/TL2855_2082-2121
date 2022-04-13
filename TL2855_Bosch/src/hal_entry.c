@@ -9,7 +9,7 @@
 bordecommdef boarduart;
 Sys_str	Sys;  // 系统标志位等等参数
 FG_DEF FG;
-
+Particle_str	Particle;  //颗粒物传感器结构体数据
 
 void r_flash_hp_bgo_example(void);
 fsp_err_t r_flash_hp_bgo_2855 ( u8 const blocks,uint32_t const src_address,uint32_t const num_bytes);
@@ -21,7 +21,9 @@ void fTurn_off(void);
 void fTurn_on(void);
 void Normal_Display(void);
 void sleep_screen(void);
-
+void fFactory_ParticleGet(void);
+void fFactory_ParticleInit(void);
+void fCalculate_PM25(u32  PM25_LPO);
 Motor_str Motorpara=  //实际转速  计算方式 转速为频率的4倍 外设的频率 	是 48000000 应该是频率降低了1024倍分频 所以需要的速度 就是（46875*4）/250  放大10倍
 {
 	{4, 4,}, //关机时候
@@ -310,7 +312,18 @@ void delay(u8 cnt)
 
 
 
+void Port201_setout(void)
+{
+	R_PORT2->PODR_b.PODR1 = 0; //输出低
+	R_PORT2->PDR_b.PDR1 = 1; //输出模式
+	R_PORT2->PCNTR1_b.PDR |= bit1; //输出
+	R_PORT2->PCNTR1_b.PODR &=~bit1; //输出低
+}
 
+void Port201_setin(void)
+{
+	R_PORT2->PDR_b.PDR1 = 0; //输入模式
+}
 
 void Task_Tvocvalurefresh(u16 tvocvalue)
 {
@@ -1403,8 +1416,9 @@ void fFactory_process(void)  //产测模式
 	static lv_style_t lv_style_src_fac; 
 	static lv_style_t lv_style_src_fac_err;
 	static u8 delay = 0;
+	static u16 errpm25cnt = 0; //PM25传感器检测计数 这边检测电平 所以1ms检测一次
 	Sys.power = 1;
-
+	Port201_setin();
 
 	if(Src_fac==NULL)	
 	{
@@ -1518,7 +1532,7 @@ void fFactory_process(void)  //产测模式
 			Task_Temprefresh (Sys.Tempvalue);
 			Task_Humirefresh(Sys.Humivalue);
 			Task_Tvocvalurefresh (Sys.tvocvalue);
-			Task_Pm25valuerefresh(Sys.pm25value);
+			Task_Pm25valuerefresh(Particle.PM25);
 		}
 		LED_Key_auto_on();
 		
@@ -1650,7 +1664,7 @@ void fFactory_process(void)  //产测模式
 				Task_Temprefresh (Sys.Tempvalue);
 				Task_Humirefresh(Sys.Humivalue);
 				Task_Tvocvalurefresh (Sys.tvocvalue);
-				Task_Pm25valuerefresh(Sys.pm25value);
+				Task_Pm25valuerefresh(Particle.PM25);
 			}
 			
 		}
@@ -1659,6 +1673,46 @@ void fFactory_process(void)  //产测模式
 	
 	lv_obj_refresh_style(Src_fac);
 
+	if(Sys.Factorysteps>=4) //显示那一步
+	{
+		if(Pin_CheckPM25==0) // 每1毫秒检测一次
+		{
+			if(errpm25cnt>=10000) // 
+			{
+				errpm25cnt = 0;
+			}
+			else
+			{
+				if(++errpm25cnt>=9999) //连续10S均为低电平 则报错
+				{
+					errpm25cnt = 9999;
+					Sys.Errcode |=ERR_PM25;	 //PM25传感器有问题	
+				}
+			}
+		}
+		else
+		{
+			if(errpm25cnt<10000)
+			{
+				errpm25cnt = 10000;
+			}
+			else
+			{
+				if(++errpm25cnt>=20000)  //连续10S均为高电平 则报错
+				{
+					errpm25cnt = 20000;
+					Sys.Errcode |=ERR_PM25;	 //PM25传感器有问题	
+				}
+			}
+		}
+	}
+	if(gTime1sflg&bit2)  //每间隔1S钟
+	{
+		gTime1sflg&=~bit2;
+		fFactory_ParticleGet(); //获取PM2.5传感器数值
+	
+	
+	}	
 
 }
 
@@ -2294,17 +2348,14 @@ void fBuz_Driver(void)  //蜂鸣器驱动 1MS一次
 void fTurn_on(void)
 {
 	Sys.power =1;
-	R_PORT2->PDR_b.PDR1 = 0; //输入模式
+	Port201_setin();
 	// R_PORT2->PODR_b.PODR1 = 0; //输出低
 }
 
 void fTurn_off(void)
 {
 	Sys.power =0;
-	R_PORT2->PODR_b.PODR1 = 0; //输出低
-	R_PORT2->PDR_b.PDR1 = 1; //输出模式
-	R_PORT2->PCNTR1_b.PDR |= bit1; //输出
-	R_PORT2->PCNTR1_b.PODR &=~bit1; //输出低
+	Port201_setout();
 	
 	if(Lvgl.Curpfunction!=Turn_On_Animation)
 	{
@@ -2353,6 +2404,16 @@ void fLogic_ctrl(void)  //常用的一些逻辑判断  10MS loop
 	}
 	else
 		Sys.Errcode &= ~ERR_COMM;
+
+	if(Sys.power)
+	{
+		Port201_setin();
+	}
+	else
+	{
+		Port201_setout();
+	}
+	
 }
 void fKey_GetValue(void)  //获取键值并处理
 {
@@ -3452,15 +3513,15 @@ void fMotor_ctrl(void)
 
 void fDisp_LedDriver(void) // LED驱动控制 125us
 {
-	static uint8_t Duty_Cnt =0;
-	static u8 s_Dim1_Cnt=0;
-	volatile u16 gAQIduty_Bluetmp = 0;
-	volatile u16 gAQIduty_Redtmp = 0;
-	volatile u16 gAQIduty_Greentmp = 0;
+	static uint8_t Duty_Cnt =0;   // 周期计数
+	// static u8 s_Dim1_Cnt=0;
+	volatile u16 gAQIduty_Bluetmp = 0;  //蓝色计算使用值
+	volatile u16 gAQIduty_Redtmp = 0;	//红色计算使用值
+	volatile u16 gAQIduty_Greentmp = 0;	//绿色计算使用值
 
-	static u16 gAQIduty_Blue;
-	static u16 gAQIduty_Red;
-	static u16 gAQIduty_Green;
+	static u16 gAQIduty_Blue;   	//蓝色实际值
+	static u16 gAQIduty_Red;		//红色实际值
+	static u16 gAQIduty_Green;		//绿色实际值
 
 
 	static u16 sBreath_dutyset=0;
@@ -3471,7 +3532,7 @@ void fDisp_LedDriver(void) // LED驱动控制 125us
 	LED_key_all_off();
 	if(Sys.power)
 	{
-		if(Sys.opmode == emodeSleep)
+		if(Sys.opmode == emodeSleep)  // 睡眠模式下
 		{
 			if(Sys.Sleep3S_Cnt == 0) //关闭灯光
 			{
@@ -3633,7 +3694,7 @@ void fDisp_LedDriver(void) // LED驱动控制 125us
 	if(Sys.power == 0 || Sys.AQI_DISABLE ||Sys.opmode==emodeSleep)  //工厂产测模 或者AQI关 或者睡眠模式下LED全部关闭
 	{
 		LED_RGB_ALLOFF();
-		Sys.leddelaycnt = 0;
+		Sys.RGBdelaycnt = 0;
 		return;
 	}
 	else
@@ -3642,9 +3703,9 @@ void fDisp_LedDriver(void) // LED驱动控制 125us
 		{
 			Duty_Cnt = 0;
 		}
-		if(++Sys.leddelaycnt>=4000)  //0.5S
+		if(++Sys.RGBdelaycnt>=4000)  //0.5S  RGB三色灯延时0.5S开启
 		{
-			Sys.leddelaycnt = 4000;
+			Sys.RGBdelaycnt = 4000;
 		}
 		else
 		{
@@ -3823,7 +3884,7 @@ void fFlashdata_read(void)
 				Sys.power = g_src[i++];
 			if(Sys.power==1)
 			{
-				R_PORT2->PDR_b.PDR1 = 0; //输入模式
+				Port201_setin();
 				Sys.Warnup_Cnt=0; // 掉电记忆是开机直接跳过30秒预热
 				Sys.opmode = g_src[i++];
 
@@ -3833,6 +3894,10 @@ void fFlashdata_read(void)
 				else
 					Lvgl.Lastpfunction=Lvgl.Curpfunction = Normal_Display;
 
+			}
+			else
+			{
+				Port201_setout();
 			}
 			break;
 		}
@@ -3903,10 +3968,12 @@ void fDeviceData_Init(void)
 		if(++p==0x80000)  //512kb
 			break;
 	}
+	fFactory_ParticleInit();   //工厂模式使用的颗粒物传感器数据先初始化
 	Sys.opmode = emodeAuto;
 	Sys.Speed.gear = 0;
 	Sys.Filter.maxhour = 3000;
 	Sys.power = 0;
+	Port201_setout();
 	Sys.Filter.accumulatedhour = 0;
 	Lvgl.Curpfunction = Turn_On_Animation;
 	
@@ -4230,7 +4297,40 @@ void fParticleGet(void) //获取微粒传感器数据
 	
 
 }
-
+void fFactory_ParticleInit(void)
+{
+//	Particle.Index = 0;
+//	Particle.KeepCnt = 10;
+	Particle.P1Time = 0;
+	Particle.P1TotalTime = 0;
+	Particle.PM25 = 0;
+	Particle.PM25Total = 0;
+//	memset(&Particle.PM25Buf[0],0,sizeof(Particle.PM25Buf));
+//	memset(&Particle.P1TBuf[0],0,sizeof(Particle.P1TBuf));
+}
+void fCalculate_PM25(u32  PM25_LPO) 
+{
+	static u8 Index=0;
+	
+	Particle.PM25Total -=Particle.PM25Buf[Index];
+	Particle.PM25Buf[Index++] = PM25_LPO;
+	Particle.PM25Total+=PM25_LPO;
+	if(Index>=4)
+		Index = 0;
+	
+	Particle.PM25tmp = (Particle.PM25Total>>2);
+	Particle.PM25 = (Particle.PM25tmp>>3);
+}
+void fFactory_ParticleGet(void)
+{
+	static u8 DustErrCnt = 0;
+	//更新数组，并求出数组的和，下面的方法可以提高效率
+	//求出P1的值	
+	Sys.facpm25check = 0;
+	fCalculate_PM25(Particle.P1Time);
+	Particle.P1Time = 0;//清零时间	
+	Sys.facpm25check = 1;
+}
 /*
 2022.01.16
 1.开始记录开发步骤
@@ -4341,6 +4441,12 @@ void fParticleGet(void) //获取微粒传感器数据
 4.加强电机处理，防止个别上电电机跑飞的问题。貌似没啥头绪，只能在关机时候强化一下。
 5.现在PCB板子丝印从1.0改为1.1
 6.修复颜色轮替显示完毕之后，颜色需要一个过渡时间切换的问题。
+
+2022.04.08
+1.日期变更为0408
+2.变量名字变更 从leddelaycnt 改为 RGBdelaycnt
+3.自检时候快速显示PM25，不使用飞利浦的库.，并且增加PM25传感器故障的显示.自检里.
+4.修复自检时候有时候会产生PM25故障的问题，主要是开关机状态下没初始化好检测脚的输入输出状态.
 */
 void hal_entry(void)
 {
@@ -4380,9 +4486,9 @@ void hal_entry(void)
 //			TEST_PINP100 = 0;
 		}
 
-		if(gTime1sflg)
+		if(gTime1sflg&bit0)
 		{
-			gTime1sflg = 0;
+			gTime1sflg &= ~bit0;
 			fFilter_Cal();  //滤网寿命计算
 			fParticleGet();
 			// fLCD_reinit();
@@ -4398,6 +4504,14 @@ void hal_entry(void)
 
 void Timer0_125us_callback (timer_callback_args_t * p_args)
 {
+	if(Sys.Factoryflg&&Sys.facpm25check)
+	{
+		if(0 == Pin_CheckPM25)
+		{
+			Particle.P1Time++;
+		}
+	
+	}
 	#if PM25LIB
 	{
 		u8 static Cnt=0;

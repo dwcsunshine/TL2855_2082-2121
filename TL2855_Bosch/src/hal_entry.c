@@ -2095,7 +2095,9 @@ void fTimer_set (void) //定时设定
 		if(Sys.Timer.hour<12)
 			Sys.Timer.hour++;
 		else
-			Sys.Timer.hour = 0;;
+		{
+			fTimer_clr();
+		}
 	}
 	else
 	{
@@ -2980,7 +2982,9 @@ void fKey_Process(void) //T =6ms
 					if(Sys.Timer.hour<12)
 						Sys.Timer.hour++;
 					else
-						Sys.Timer.hour = 0;
+					{
+						fTimer_clr();  // 清除定时 超过12的时候直接清除定时 20220417
+					}
 				}
 			}
 			break;
@@ -3614,27 +3618,27 @@ void fDisp_LedDriver(void) // LED驱动控制 125us
 
 	switch(Sys.AQI_LEVEL)
 	{
-	case 0:
+	case 0:   //蓝
 
 		gAQIduty_Red  = 0;
 		gAQIduty_Green   =0;
 		gAQIduty_Blue = 100;
 		break;
-	case 1:
+	case 1:  //紫
 		gAQIduty_Red  = 67;
 		gAQIduty_Green   =12;
 		gAQIduty_Blue = 96;
 
 		break;
-	case 2:
+	case 2:  //橙
 
 		gAQIduty_Red  = 100;
-		gAQIduty_Green   =30;
+		gAQIduty_Green   =15; // 20220417 从30改为15
 		gAQIduty_Blue = 0;
 
 		break;
 	case 3:
-		gAQIduty_Red  = 100;
+		gAQIduty_Red  = 100; //红
 		gAQIduty_Green   =0;
 		gAQIduty_Blue = 0;
 
@@ -4447,6 +4451,12 @@ void fFactory_ParticleGet(void)
 2.变量名字变更 从leddelaycnt 改为 RGBdelaycnt
 3.自检时候快速显示PM25，不使用飞利浦的库.，并且增加PM25传感器故障的显示.自检里.
 4.修复自检时候有时候会产生PM25故障的问题，主要是开关机状态下没初始化好检测脚的输入输出状态.
+
+2022.04.17
+1.日期为0417
+2.软件版本现在变为1.0  原先是0.0.1.
+3.修复问题定时超过12小时直接取消定时，现在还会显示0.
+4.现在橙色需要更加的橙（绿色减半 或者红色加倍）
 */
 void hal_entry(void)
 {

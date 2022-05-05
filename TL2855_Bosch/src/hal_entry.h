@@ -19,10 +19,10 @@
 */
 extern volatile bool g_transfer_complete;
 
-
-#define CompleteData "Data:2022.04.17"
-#define MainBoardVer "MainBoard Ver:1.0"
-#define PCBVer "PCB Ver:1.1"
+#define FlashSize  0x100000    
+#define CompleteDate "Date:2022.04.28"
+#define MainSoftVer "MainSoft Ver:1.0"
+#define MainPCBVer "MainPCB Ver:1.1"
 
 
 
@@ -108,9 +108,9 @@ typedef signed int  s32;
 
 #define TFT_DATA 		R_PORT1->PODR_b.PODR9
 
-#define Buz_En() 		R_PORT4->PODR_b.PODR1=1
-#define Buz_Dis() 		R_PORT4->PODR_b.PODR1=0
-#define Buz_Beep()  	{Sys.Buzcnt = 200;}
+#define Buz_En() 		0//R_PORT4->PODR_b.PODR1=1
+#define Buz_Dis() 		0//R_PORT4->PODR_b.PODR1=0
+#define Buz_Beep()  	 0 //{Sys.Buzcnt = 200;}
 
 
 
@@ -299,7 +299,8 @@ typedef struct
 
 typedef struct
 {
-	u16 Applicationchecksum;
+	u8 powertmp;
+	u32 Applicationchecksum;
 	u8 Initcomplete;
 	u8 flowcnt;
 	u8 testflg;

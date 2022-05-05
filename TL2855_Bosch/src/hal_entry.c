@@ -964,7 +964,7 @@ void Filter_display(void)  //滤网寿命显示
 
 	}
 	
-	if(++Lvgl.Filtercnt>=3000)
+	if(++Lvgl.Filtercnt>=10000)  // 2022.04.28 从3S改为10S
 	{
 		if(Sys.Filter.dispflg&&(Sys.Errcode&ERR_Filterlock))
 		{
@@ -1417,8 +1417,7 @@ void fFactory_process(void)  //产测模式
 	static lv_style_t lv_style_src_fac_err;
 	static u8 delay = 0;
 	static u16 errpm25cnt = 0; //PM25传感器检测计数 这边检测电平 所以1ms检测一次
-	Sys.power = 1;
-	Port201_setin();
+	fTurn_on();
 
 	if(Src_fac==NULL)	
 	{
@@ -1492,27 +1491,51 @@ void fFactory_process(void)  //产测模式
 		{
 			lv_style_src_fac.body.main_color = LV_COLOR_BLACK;
 			lv_style_src_fac.body.grad_color = LV_COLOR_BLACK;
-			lv_label_set_static_text(label_MainboardSoftwareversion,MainBoardVer);
-			strcpy(&table_SensorsoftwareVer[0],"Sensor Ver:");
-			table_SensorsoftwareVer[11] = 0x30+(Sys.softwareversion >>4);
-			table_SensorsoftwareVer[12] = '.';
-			table_SensorsoftwareVer[13] = 0x30+(Sys.softwareversion &0x0f);
-			lv_label_set_array_text(label_Sensorsoftwareversion,&table_SensorsoftwareVer[0],14);
-			lv_label_set_static_text(label_PCBversion,PCBVer);
-			lv_label_set_static_text(label_Comletedata,CompleteData);
-			strcpy(&table_Checksum[0],"Checksum:0x");
+			lv_label_set_static_text(label_MainboardSoftwareversion,MainSoftVer);
+			strcpy(&table_SensorsoftwareVer[0],"SensorSoft Ver:");
+			table_SensorsoftwareVer[15] = 0x30+(Sys.softwareversion >>4);
+			table_SensorsoftwareVer[16] = '.';
+			table_SensorsoftwareVer[17] = 0x30+(Sys.softwareversion &0x0f);
+			lv_label_set_array_text(label_Sensorsoftwareversion,&table_SensorsoftwareVer[0],18);
+			lv_label_set_static_text(label_PCBversion,MainPCBVer);
+			lv_label_set_static_text(label_Comletedata,CompleteDate);
+			strcpy(&table_Checksum[0],"Code:0x");
 			
-			table_Checksum[11] = fget_char((Sys.Applicationchecksum >>12)&0x000f);
-			table_Checksum[12] = fget_char((Sys.Applicationchecksum >>8)&0x000f);
-			table_Checksum[13] = fget_char((Sys.Applicationchecksum >>4)&0x000f);
-			table_Checksum[14] = fget_char((Sys.Applicationchecksum >>0)&0x000f);
+			table_Checksum[7] = fget_char((Sys.Applicationchecksum >>28)&0x0000000f);
+			table_Checksum[8] = fget_char((Sys.Applicationchecksum >>24)&0x0000000f);
+			table_Checksum[9] = fget_char((Sys.Applicationchecksum >>20)&0x0000000f);
+			table_Checksum[10] = fget_char((Sys.Applicationchecksum >>16)&0x0000000f);
+			table_Checksum[11] = fget_char((Sys.Applicationchecksum >>12)&0x0000000f);
+			table_Checksum[12] = fget_char((Sys.Applicationchecksum >>8)&0x0000000f);
+			table_Checksum[13] = fget_char((Sys.Applicationchecksum >>4)&0x0000000f);
+			table_Checksum[14] = fget_char((Sys.Applicationchecksum >>0)&0x0000000f);
 			lv_label_set_array_text(label_Checksum,&table_Checksum[0],15);
 			lv_style_src_fac.text.opa = 255;
+
+			
 		}
-		
+		if(Sys.FactoryDelaycnt == 0)
+		{
+			if(Sys.Errcode&ERR_HALL)
+			{
+				Sys.Factorysteps = 4;
+				Sys.FactoryDelaycnt = 500;
+				lv_style_src_fac.text.opa = 0; //隐藏版本信息
+			}
+		}
 		
 		break;
 	case 4:
+		if(Sys.FactoryDelaycnt == 0)
+		{
+			if((Sys.Errcode&ERR_HALL)==0)
+			{
+				Sys.Factorysteps = 5;
+				Sys.FactoryDelaycnt = 501;
+			}
+		}
+		break;
+	case 5:
 		/* code */
 		lv_style_src_fac.text.opa = 0; //隐藏版本信息
 		if(Sys.FactoryDelaycnt == 500)
@@ -1534,28 +1557,31 @@ void fFactory_process(void)  //产测模式
 			Task_Tvocvalurefresh (Sys.tvocvalue);
 			Task_Pm25valuerefresh(Particle.PM25);
 		}
-		LED_Key_auto_on();
+	
 		
 		break;
-	case 5:
+	case 6:
+		LED_Key_auto_on();
+		break;
+	case 7:
 		/* code */
 		LED_Key_sleep_on();
 		LED_Key_auto_on();
 		break;
-	case 6:
+	case 8:
 		/* code */
 		LED_Key_sleep_on();
 		LED_Key_auto_on();
 		LED_Key_speed_on();
 		break;
-	case 7:
+	case 9:
 		/* code */
 		LED_Key_sleep_on();
 		LED_Key_auto_on();
 		LED_Key_speed_on();
 		LED_Key_filter_on();
 		break;
-	case 8:
+	case 10:
 		/* code */
 		LED_Key_sleep_on();
 		LED_Key_auto_on();
@@ -1563,16 +1589,16 @@ void fFactory_process(void)  //产测模式
 		LED_Key_filter_on();
 		LED_Key_power_on();
 		break;
-	case 9:
+	case 11:
 		/* code */
 		LED_key_all_on();
 		if(Sys.FactoryDelaycnt==0)
 		{
-			Sys.Factorysteps = 10;
+			Sys.Factorysteps = 12;
 		}
 			
 		break;
-	case 10:  // //退出自检的流程. 
+	case 12:  // //退出自检的流程. 
 		/* code */
 		LED_key_all_on();
 		if(Sys.Errcode == 0)
@@ -2359,10 +2385,14 @@ void fTurn_off(void)
 	Sys.power =0;
 	Port201_setout();
 	
-	if(Lvgl.Curpfunction!=Turn_On_Animation)
-	{
-		Lvgl.Curpfunction=Turn_On_Animation;
-	}
+	// if(Lvgl.Curpfunction!=Turn_On_Animation)
+	// {
+	// 	Lvgl.Curpfunction=Turn_On_Animation;
+	// }
+	Lvgl.Curpfunction = Turn_On_Animation;
+	Lvgl.Lastpfunction = Normal_Display;
+	if(Sys.opmode!=emodeAuto)
+		Sys.opmode = emodeAuto;
 	if(Sys.Filter.dispflg == 0) //每次关机都打开滤网时间到的常显标志
 		Sys.Filter.dispflg = 1;
 	Lvgl.cnt = 0;
@@ -2622,22 +2652,24 @@ void fKey_Process(void) //T =6ms
 					if(KeyStatus & KEY_ShortPress)
 					{
 						KeyStatus&=~KEY_ShortPress;
-
-						if(Sys.Factorysteps<3)
+						if(Sys.FactoryDelaycnt==0) //必须至少等待一段时间
 						{
-							Sys.FactoryDelaycnt = 500;
-							Sys.Factorysteps++;
-						}
-							
-						else
-						{
-							if(Sys.Factorysteps==3)
+							if(Sys.Factorysteps<3)
 							{
-								Sys.Factorysteps = 4;
 								Sys.FactoryDelaycnt = 500;
+								Sys.Factorysteps++;
 							}
-							
-						}	
+								
+							else
+							{
+								if(Sys.Factorysteps==5)
+								{
+									Sys.Factorysteps = 6;
+									Sys.FactoryDelaycnt = 500;
+								}
+								
+							}	
+						}
 												
 					}
 				
@@ -2650,22 +2682,25 @@ void fKey_Process(void) //T =6ms
 					if(KeyStatus & KEY_ShortPress)
 					{
 						KeyStatus&=~KEY_ShortPress;
-						if(Sys.Factorysteps<3)
+						if(Sys.FactoryDelaycnt==0) //必须至少等待一段时间
 						{
-							Sys.FactoryDelaycnt = 500;
-							Sys.Factorysteps++;
-						}
-							
-						else
-						{
-							if(Sys.Factorysteps==4)
+							if(Sys.Factorysteps<3)
 							{
-								Sys.Factorysteps = 5;
 								Sys.FactoryDelaycnt = 500;
+								Sys.Factorysteps++;
 							}
-						
+								
+							else
+							{
+								if(Sys.Factorysteps==6)
+								{
+									Sys.Factorysteps = 7;
+									Sys.FactoryDelaycnt = 500;
+								}
+								
+							}	
 						}
-						
+												
 					}
 
 					if(KeyStatus&KEY_LongOnce)
@@ -2677,22 +2712,25 @@ void fKey_Process(void) //T =6ms
 					if(KeyStatus & KEY_ShortPress)
 					{
 						KeyStatus&=~KEY_ShortPress;
-						if(Sys.Factorysteps<3)
+						if(Sys.FactoryDelaycnt==0) //必须至少等待一段时间
 						{
-							Sys.FactoryDelaycnt = 500;
-							Sys.Factorysteps++;
-						}
-							
-						else
-						{
-							if(Sys.Factorysteps==5)
+							if(Sys.Factorysteps<3)
 							{
-								Sys.Factorysteps = 6;
 								Sys.FactoryDelaycnt = 500;
+								Sys.Factorysteps++;
 							}
-							
+								
+							else
+							{
+								if(Sys.Factorysteps==7)
+								{
+									Sys.Factorysteps = 8;
+									Sys.FactoryDelaycnt = 500;
+								}
+								
+							}	
 						}
-						
+												
 					}
 					if(KeyStatus&KEY_LongOnce)
 					{
@@ -2703,22 +2741,25 @@ void fKey_Process(void) //T =6ms
 					if(KeyStatus & KEY_ShortPress)
 					{
 						KeyStatus&=~KEY_ShortPress;
-						if(Sys.Factorysteps<3)
+						if(Sys.FactoryDelaycnt==0) //必须至少等待一段时间
 						{
-							Sys.FactoryDelaycnt = 500;
-							Sys.Factorysteps++;
-						}
-							
-						else
-						{
-							if(Sys.Factorysteps==6)
+							if(Sys.Factorysteps<3)
 							{
-								Sys.Factorysteps = 7;
 								Sys.FactoryDelaycnt = 500;
+								Sys.Factorysteps++;
 							}
-							
+								
+							else
+							{
+								if(Sys.Factorysteps==8)
+								{
+									Sys.Factorysteps = 9;
+									Sys.FactoryDelaycnt = 500;
+								}
+								
+							}	
 						}
-						
+												
 					}
 
 					if(KeyStatus&KEY_LongOnce)
@@ -2730,25 +2771,28 @@ void fKey_Process(void) //T =6ms
 					}
 					break;
 				case KEY_POWER:  //开关按键
-					if(KeyStatus & KEY_ShortPress) //短按只会执行一次
+					if(KeyStatus & KEY_ShortPress)
 					{
 						KeyStatus&=~KEY_ShortPress;
-						if(Sys.Factorysteps<3)
+						if(Sys.FactoryDelaycnt==0) //必须至少等待一段时间
 						{
-							Sys.FactoryDelaycnt = 500;
-							Sys.Factorysteps++;
-						}
-							
-						else
-						{
-							if(Sys.Factorysteps==7)
+							if(Sys.Factorysteps<3)
 							{
-								Sys.Factorysteps = 8;
 								Sys.FactoryDelaycnt = 500;
+								Sys.Factorysteps++;
 							}
-							
+								
+							else
+							{
+								if(Sys.Factorysteps==9)
+								{
+									Sys.Factorysteps = 10;
+									Sys.FactoryDelaycnt = 500;
+								}
+								
+							}	
 						}
-						
+												
 					}
 
 					if(KeyStatus&KEY_LongOnce)
@@ -2764,22 +2808,25 @@ void fKey_Process(void) //T =6ms
 					if(KeyStatus & KEY_ShortPress)
 					{
 						KeyStatus&=~KEY_ShortPress;
-						if(Sys.Factorysteps<3)
+						if(Sys.FactoryDelaycnt==0) //必须至少等待一段时间
 						{
-							Sys.FactoryDelaycnt = 500;
-							Sys.Factorysteps++;
-						}
-							
-						else
-						{
-							if(Sys.Factorysteps==8)
+							if(Sys.Factorysteps<3)
 							{
-								Sys.Factorysteps = 9;
-								Sys.FactoryDelaycnt = 2000;
+								Sys.FactoryDelaycnt = 500;
+								Sys.Factorysteps++;
 							}
-							
+								
+							else
+							{
+								if(Sys.Factorysteps==10)
+								{
+									Sys.Factorysteps = 11;
+									Sys.FactoryDelaycnt = 2000;
+								}
+								
+							}	
 						}
-						
+												
 					}
 					if(KeyStatus&KEY_LongPress)
 					{
@@ -3531,11 +3578,14 @@ void fDisp_LedDriver(void) // LED驱动控制 125us
 	static u16 sBreath_dutyset=0;
 	static u8 sBreath_dutycnt=0;
 	volatile u16 sBreath_dutytmp = 0;
+	static u32 delayoffcnt = 0;
 	if(Sys.Factoryflg ||Sys.Initcomplete==0)  // 产测模式下不执行 初始化未完成不执行
 		return;
 	LED_key_all_off();
 	if(Sys.power)
 	{
+		R_MSTP->MSTPCRE_b.MSTPE27 = 0; //开启PWM模块
+		delayoffcnt = 0;
 		if(Sys.opmode == emodeSleep)  // 睡眠模式下
 		{
 			if(Sys.Sleep3S_Cnt == 0) //关闭灯光
@@ -3584,24 +3634,36 @@ void fDisp_LedDriver(void) // LED驱动控制 125us
 		}
 		else
 		{
-			if(sBreath_dutyset>=4000)
+			
+			if(delayoffcnt<80000) //10S
 			{
-				sBreath_dutytmp = 0;
-			}
-			else
-			{
-				sBreath_dutytmp = (sBreath_dutyset>=2000)?(3999-sBreath_dutyset):(sBreath_dutyset);
-				sBreath_dutytmp=sBreath_dutytmp/40;
-			}
+				delayoffcnt++;
+				if(sBreath_dutyset>=4000)
+				{
+					sBreath_dutytmp = 0;
+				}
+				else
+				{
+					sBreath_dutytmp = (sBreath_dutyset>=2000)?(3999-sBreath_dutyset):(sBreath_dutyset);
+					sBreath_dutytmp=sBreath_dutytmp/40;
+				}
 
-			if(sBreath_dutycnt<sBreath_dutytmp)
-			{
-				LED_Key_power_on ();
+				if(sBreath_dutycnt<sBreath_dutytmp)
+				{
+					LED_Key_power_on ();
+				}
+				else
+				{
+					LED_Key_power_off ();
+				}
 			}
 			else
 			{
 				LED_Key_power_off ();
+				R_MSTP->MSTPCRE_b.MSTPE27 = 1; //关闭PWM模块
+
 			}
+			
 		}
 
 	}
@@ -3788,6 +3850,7 @@ void Sys_start(void)
 	R_GPT_Start (&g_motor_pwm_ctrl);
 	R_GPT_DutyCycleSet(&g_motor_pwm_ctrl,SPDOFF,GPT_IO_PIN_GTIOCA);
 	Sys.Initcomplete = 1; // 初始化完毕 可以执行任务了
+	Sys.powertmp = Sys.power; //先给开关状态赋值初值
 }
 void  Sys_Init(void) //系统初始化函数
 {
@@ -3796,10 +3859,10 @@ void  Sys_Init(void) //系统初始化函数
 	TFT_RES = 1;
 	TFT_LED = 0;
 
-	R_GPT_Open (&g_timer0_125us_ctrl,&g_timer0_125us_cfg); // 1MS中断 给LVGL 提供心跳
+	R_GPT_Open (&g_timer0_125us_ctrl,&g_timer0_125us_cfg); // 125us
 
 
-	R_GPT_Open (&g_timer1_ctrl,&g_timer1_cfg); // 1ms
+	R_GPT_Open (&g_timer1_ctrl,&g_timer1_cfg); // 1ms1MS中断 给LVGL 提供心跳
 	R_GPT_Start (&g_timer1_ctrl);
 	R_DMAC_Open(&g_transfer_ctrl, &g_transfer_cfg);
 	/* Enable the DMAC so that it responds to transfer requests. */
@@ -3821,7 +3884,7 @@ void  Sys_Init(void) //系统初始化函数
 
 //	R_GPT_Start (&g_Buzz_pwm_ctrl);
 
-	R_SCI_UART_Open(&g_uart_sensor_ctrl,&g_uart_sensor_cfg); // 1MS中断 给LVGL 提供心跳
+	R_SCI_UART_Open(&g_uart_sensor_ctrl,&g_uart_sensor_cfg); // 主板和传感器板的通讯
 
 //	__IOM uint32_t IELS : 9;   /*!< [8..0] ICU Event selection to NVICSet the number for the event
 //										   *   signal to be linked .													 */
@@ -3921,6 +3984,8 @@ void fFlashdata_deal(void)
 	static u8 handlewaitcnt =0;
 	static u8 handletimeslimit = 0;
 	volatile u8 g_src[50]= {0};
+	if(Sys.Factoryflg) //产测模式不记忆
+		return;
 	g_src[i++]=0x5f;
 	g_src[i++]=0x50;
 	i++;
@@ -3941,15 +4006,21 @@ void fFlashdata_deal(void)
 	g_src[i-2]=checksum;
 	if(memcmp(&g_src[0],(u8 *)FLASH_DF_BLOCK_0,i)!=0 && memcmp(&g_src[0],(u8 *)FLASH_DF_BLOCK_1,i)!=0)
 	{
+		if(Sys.powertmp!=Sys.power)  //关机下 记忆变为1S
+		{
+			Sys.powertmp = Sys.power;
+			if(handlewaitcnt<40&&Sys.power==0)
+				handlewaitcnt = 40;
+		}
+
 		if(handletimeslimit<=20)
 		{
 			if(++handlewaitcnt>=50)
 			{
+				handletimeslimit++;
 				handlewaitcnt = 0;
-
 				r_flash_hp_bgo_2855(0,&g_src[0],i);
-				if(memcmp(&g_src[0],(u8 *)FLASH_DF_BLOCK_0,i)!=0 && memcmp(&g_src[0],(u8 *)FLASH_DF_BLOCK_1,i)!=0)
-					handletimeslimit++;
+				
 			}
 		}
 	}
@@ -3969,7 +4040,7 @@ void fDeviceData_Init(void)
 	{
 		
 		Sys.Applicationchecksum += *(u8 *)(p);
-		if(++p==0x80000)  //512kb
+		if(++p==FlashSize)  //计算芯片的校验和
 			break;
 	}
 	fFactory_ParticleInit();   //工厂模式使用的颗粒物传感器数据先初始化
@@ -4457,6 +4528,17 @@ void fFactory_ParticleGet(void)
 2.软件版本现在变为1.0  原先是0.0.1.
 3.修复问题定时超过12小时直接取消定时，现在还会显示0.
 4.现在橙色需要更加的橙（绿色减半 或者红色加倍）
+
+2022.04.28
+1.现在日期变更为0428
+2.现在显示校验和改为32位，和烧录器一致.校验和变量从16位变为32位.
+3.降功耗，现在关机10S后会关闭PWM模块的输出以及LED灯. 修复霍尔正常未清除Sys.flashing_ooh计数导致的问题，
+4.滤网显示从3S改为10S.
+5.关机记忆从原先的5S变为1S.只会在从开机切换到关机的那一刻切为至多1s.
+6.现在关机要切换到自动模式.
+7.自检现在增加一步需要检测霍尔的开和关.
+8.现在产测状态下不记忆E方.
+9.修改自检部分描述.
 */
 void hal_entry(void)
 {
@@ -4619,6 +4701,10 @@ void Timer1_1ms_callback (timer_callback_args_t * p_args)
 		{
 			if(Sys.flashing_ooh)
 				Sys.flashing_ooh--;
+		}
+		else
+		{
+			Sys.flashing_ooh = 0;
 		}
 		fBuz_Driver(); //蜂鸣器
 	}

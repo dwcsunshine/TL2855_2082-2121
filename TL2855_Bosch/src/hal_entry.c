@@ -1028,7 +1028,7 @@ void Filter_reset_animation(void)
 
 	}
 	
-	if(Lvgl.Filtercnt%40==0 && Lvgl.Filtercnt<800) //20帧
+	if(Lvgl.Filtercnt%20==0 && Lvgl.Filtercnt<400) //20帧
 	{
 		if(Lvgl.Lastpfunction == Normal_Display)
 		{
@@ -1056,7 +1056,7 @@ void Filter_reset_animation(void)
 		if(Sys.Timer.setflg)
 			src1_style_Mainscreen_Timer.text.opa -=  11;
 
-		if(Lvgl.Filtercnt == 760)
+		if(Lvgl.Filtercnt == 380)
 		{
 			if(Lvgl.Lastpfunction == Normal_Display)
 			{
@@ -1085,7 +1085,7 @@ void Filter_reset_animation(void)
 		}
 		
 	}
-	if(Lvgl.Filtercnt == 800)
+	if(Lvgl.Filtercnt == 400)
 	{
 		offsetx  = 75;
 		offsety  = 76;
@@ -1222,26 +1222,26 @@ void Filter_reset_animation(void)
 
 	}
 //
-	if(Lvgl.Filtercnt%40 == 0 && Lvgl.Filtercnt<=800) // 20帧
+	if(Lvgl.Filtercnt%20 == 0 && Lvgl.Filtercnt<=400) // 20帧
 	{
 		lv_obj_refresh_style (scr);
 	}
-	else if(Lvgl.Filtercnt%20 == 0 && Lvgl.Filtercnt<1200) // 20帧
+	else if(Lvgl.Filtercnt%20 == 0 && Lvgl.Filtercnt<600) // 10帧
 	{
 		lv_obj_refresh_style (scr);
-		cont1_style_main.body.border.opa+=5;
+		cont1_style_main.body.border.opa+=10;
 	}
-	else if(Lvgl.Filtercnt%20 == 0 && Lvgl.Filtercnt<=1600) // 证书
+	// else if(Lvgl.Filtercnt%20 == 0 && Lvgl.Filtercnt<=1600) // 
+	// {
+	// 	lv_obj_refresh_style (scr);
+	// }
+	else if(Lvgl.Filtercnt%20 == 0 && Lvgl.Filtercnt<=2200)  //80帧
 	{
-		lv_obj_refresh_style (scr);
-	}
-	else if(Lvgl.Filtercnt%20 == 0 && Lvgl.Filtercnt<=2200)
-	{
-		if(Label_style_text_filterreset.text.opa<255)
+		if(Label_style_text_filterreset.text.opa<250)
 			Label_style_text_filterreset.text.opa += 3;
-		if(Lvgl.Filtercnt>=1000)
+		if(Lvgl.Filtercnt>=1000)  //60帧
 		{
-			if(Label_style_pic_OK.text.opa<255)
+			if(Label_style_pic_OK.text.opa<250)
 				Label_style_pic_OK.text.opa += 4;
 		}
 		if(Lvgl.Filtercnt==2200)
@@ -1256,8 +1256,8 @@ void Filter_reset_animation(void)
 		Label_style_pic_OK.text.opa -=11;
 		Label_style_pic_filter.text.opa+=11;
 		bar1_style_bg.body.opa += 11;
+		bar1_style_indic.body.opa += 11;  //20220505 修复bug
 		if(Lvgl.Filtercnt==2600)
-		bar1_style_indic.body.opa += 11;
 		{
 			Label_style_pic_OK.text.opa =0;
 			Label_style_pic_filter.text.opa =255;
@@ -2249,14 +2249,25 @@ void LCD_WR_DATA(u8 data)
 
 void LCD_Init(void)
 {
-	TFT_RES=1;
-	delay_cnt(200);
-	TFT_RES=0;
-	delay_cnt(800);
-	TFT_RES=1;
-	delay_cnt(800);
-	TFT_CS = 0;
+	static u8 sPowerflg = 1;
+	R_GPT_Stop (&g_timer1_ctrl);
+	
+	if(sPowerflg)  //只会在上电的时候执行一次硬复位
+	{
+		delay_cnt(120); //Delay 120ms
+		TFT_RES=1;
+		delay_cnt(200);
+		TFT_RES=0;
+		delay_cnt(800);
+		TFT_RES=1;
+		delay_cnt(800);
+		TFT_CS = 0;
+	}
+	
+	delay_cnt(120); //Delay 120ms
 	//*** ST7789V2-HSD2.0 IPS- ***//
+	LCD_WR_REG(0x01); //软复位指令
+	delay_cnt(120); //Delay 120ms
 	LCD_WR_REG(0x11);
 	delay_cnt(120); //Delay 120ms
 
@@ -2348,11 +2359,12 @@ void LCD_Init(void)
 	LCD_WR_DATA(0x01);
 	LCD_WR_DATA(0x3f);
 	LCD_WR_REG(0x2C); //
-
-	LCD_Clear(0x0000); // 565格式
-
-
-
+	if(sPowerflg)  //只会在板子复位之后执行一次
+	{
+		sPowerflg = 0;
+		LCD_Clear(0x0000); // 565格式
+	}
+	R_GPT_Start (&g_timer1_ctrl);
 }
 
 void fBuz_Driver(void)  //蜂鸣器驱动 1MS一次
@@ -2384,7 +2396,7 @@ void fTurn_off(void)
 {
 	Sys.power =0;
 	Port201_setout();
-	
+	LCD_Init(); // 确保进入低功耗的时候只会执行一次
 	// if(Lvgl.Curpfunction!=Turn_On_Animation)
 	// {
 	// 	Lvgl.Curpfunction=Turn_On_Animation;
@@ -4539,6 +4551,11 @@ void fFactory_ParticleGet(void)
 7.自检现在增加一步需要检测霍尔的开和关.
 8.现在产测状态下不记忆E方.
 9.修改自检部分描述.
+
+2022.05.05
+1.日期改为05.05
+2.修复滤网复位时候的一些bug.
+3.现在LCD会在关机的时候软复位刷新一次.
 */
 void hal_entry(void)
 {

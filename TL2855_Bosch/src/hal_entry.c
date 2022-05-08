@@ -1699,7 +1699,7 @@ void fFactory_process(void)  //产测模式
 	
 	lv_obj_refresh_style(Src_fac);
 
-	if(Sys.Factorysteps>=4) //显示那一步
+	if(Sys.Factorysteps>=1) //显示那一步
 	{
 		if(Pin_CheckPM25==0) // 每1毫秒检测一次
 		{
@@ -1861,6 +1861,7 @@ void Normal_Display(void)  //正常显示
 		{
 			lv_obj_set_hidden (label_auto_manual,false); //之前如果隐藏了模式标签的话需要显示
 		}
+		Main_screen_display();  // 防止部分显示会出现缺失  因为创建函数里面先会全部隐藏.
 		lv_obj_refresh_style (scr);
 	}
 	
@@ -2096,6 +2097,7 @@ void Turn_On_Animation(void)
 		{
 			Lvgl.cnt = 0;
 			Lvgl.Curpfunction = Lvgl.Lastpfunction;
+			
 		}
 	}
 	else
@@ -2251,7 +2253,7 @@ void LCD_Init(void)
 {
 	static u8 sPowerflg = 1;
 	R_GPT_Stop (&g_timer1_ctrl);
-	
+	TFT_LED = 0; // 先关闭TFT屏幕的显示电源
 	if(sPowerflg)  //只会在上电的时候执行一次硬复位
 	{
 		delay_cnt(120); //Delay 120ms
@@ -2396,6 +2398,7 @@ void fTurn_off(void)
 {
 	Sys.power =0;
 	Port201_setout();
+	
 	LCD_Init(); // 确保进入低功耗的时候只会执行一次
 	// if(Lvgl.Curpfunction!=Turn_On_Animation)
 	// {
@@ -3409,10 +3412,10 @@ void fMotor_ctrl(void)
 				Sys.delaycnt = 10;
 				PWR_MOTOR_EN();
 			}
-			if(Sys.Speed.FeedBack<100 )  //产测下10S，正常30S风速反馈小于100 
+			if(Sys.Speed.FeedBack<100 )  //产测下15S，正常30S风速反馈小于100 
 			{
 				sErr_30s++;
-				if(sErr_30s>=(Sys.Factoryflg!=0?100:300))
+				if(sErr_30s>=(Sys.Factoryflg!=0?150:300))
 				{
 					sErr_30s = 300;
 					Sys.Errcode |=ERR_FAN;  // 10S或者30S之内没达到100转 风机故障
@@ -3593,6 +3596,7 @@ void fDisp_LedDriver(void) // LED驱动控制 125us
 	static u32 delayoffcnt = 0;
 	if(Sys.Factoryflg ||Sys.Initcomplete==0)  // 产测模式下不执行 初始化未完成不执行
 		return;
+	// LED_RGB_ALLOFF();
 	LED_key_all_off();
 	if(Sys.power)
 	{
@@ -3765,10 +3769,14 @@ void fDisp_LedDriver(void) // LED驱动控制 125us
 	gAQIduty_Redtmp = gAQIduty_Red;
 	gAQIduty_Greentmp = gAQIduty_Green;
 
-//	gAQIduty_Bluetmp = gAQIduty_Bluetmp*85;
-//	gAQIduty_Bluetmp = gAQIduty_Bluetmp/100;
-//	gAQIduty_Redtmp = gAQIduty_Redtmp*85;
-//	gAQIduty_Redtmp = gAQIduty_Redtmp/100;  // 亮度全部降低为原先的85%
+
+
+	// gAQIduty_Bluetmp = gAQIduty_Bluetmp*70;
+	// gAQIduty_Bluetmp = gAQIduty_Bluetmp/100;
+	// gAQIduty_Redtmp = gAQIduty_Redtmp*70;
+	// gAQIduty_Redtmp = gAQIduty_Redtmp/100;  // 亮度全部降低为原先的85%
+	// gAQIduty_Greentmp = gAQIduty_Greentmp*70;
+	// gAQIduty_Greentmp = gAQIduty_Greentmp/100;
 	if(Sys.power == 0 || Sys.AQI_DISABLE ||Sys.opmode==emodeSleep)  //工厂产测模 或者AQI关 或者睡眠模式下LED全部关闭
 	{
 		LED_RGB_ALLOFF();
@@ -3937,6 +3945,7 @@ void fFlashdata_read(void)
 	Addr = FLASH_HP_DF_BLOCK_0;
 	do
 	{
+		checksum = 0;
 		memset(&g_src[0],0,sizeof(g_src)); //缓存数据数组清除
 
 		datalen = *((uint8_t *)(Addr+2));
@@ -4556,6 +4565,15 @@ void fFactory_ParticleGet(void)
 1.日期改为05.05
 2.修复滤网复位时候的一些bug.
 3.现在LCD会在关机的时候软复位刷新一次.
+
+2022.05.06
+1.日期变更为0506
+2.博世图标重新制作，更加的透明圆润.替换bosch.c文件即可。
+3.关机下执行LCD初始化放在关闭LED背光之后，防止关机会有背景显示.
+4.修复在从开机动画切换到正常显示的时候，出现的个别画面缺失再完整的问题.
+5.修复读取E方时候，第二地址永远不会读取正常的问题，因为checksum未清0
+6.风机在自检状态下故障判断从10S改为15S.
+7.PM25故障现在第一步就开始检测.
 */
 void hal_entry(void)
 {

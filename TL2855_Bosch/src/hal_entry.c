@@ -1462,7 +1462,7 @@ void fFactory_process(void)  //产测模式
 	{
 	case 0:
 		/* code */
-		if(Sys.FactoryDelaycnt == 500)
+		if(Sys.FactoryDelaycnt == 2000)
 		{
 			Main_screen_clean();
 			lv_obj_refresh_style(scr);
@@ -1487,7 +1487,7 @@ void fFactory_process(void)  //产测模式
 	case 3:
 		/* code */
 	
-		if(Sys.FactoryDelaycnt == 500)
+		if(Sys.FactoryDelaycnt == 2000)
 		{
 			lv_style_src_fac.body.main_color = LV_COLOR_BLACK;
 			lv_style_src_fac.body.grad_color = LV_COLOR_BLACK;
@@ -1519,7 +1519,7 @@ void fFactory_process(void)  //产测模式
 			if(Sys.Errcode&ERR_HALL)
 			{
 				Sys.Factorysteps = 4;
-				Sys.FactoryDelaycnt = 500;
+				Sys.FactoryDelaycnt = 1000;
 				lv_style_src_fac.text.opa = 0; //隐藏版本信息
 			}
 		}
@@ -1531,14 +1531,14 @@ void fFactory_process(void)  //产测模式
 			if((Sys.Errcode&ERR_HALL)==0)
 			{
 				Sys.Factorysteps = 5;
-				Sys.FactoryDelaycnt = 501;
+				Sys.FactoryDelaycnt = 1001;
 			}
 		}
 		break;
 	case 5:
 		/* code */
 		lv_style_src_fac.text.opa = 0; //隐藏版本信息
-		if(Sys.FactoryDelaycnt == 500)
+		if(Sys.FactoryDelaycnt == 1000)
 		{
 			Task_Sensordatacreate();
 			Task_Humicreate();
@@ -1595,13 +1595,14 @@ void fFactory_process(void)  //产测模式
 		if(Sys.FactoryDelaycnt==0)
 		{
 			Sys.Factorysteps = 12;
+			Sys.FactoryDelaycnt = 2000;
 		}
 			
 		break;
 	case 12:  // //退出自检的流程. 
 		/* code */
 		LED_key_all_on();
-		if(Sys.Errcode == 0)
+		if(Sys.Errcode == 0 && (Sys.FactoryDelaycnt==0))
 		{
 			lv_obj_set_parent(label_pm25,scr);
 			lv_obj_set_parent(label_tvoc,scr);
@@ -1680,6 +1681,20 @@ void fFactory_process(void)  //产测模式
 					table_Err[6]='L';
 					table_Err[7]=' ';
 				}
+				else if(Sys.Errcode&ERR_TEMP)
+				{
+					table_Err[4]='T';
+					table_Err[5]='E';
+					table_Err[6]='M';
+					table_Err[7]='P';
+				}
+				else
+				{
+					table_Err[4]=' ';
+					table_Err[5]=' ';
+					table_Err[6]=' ';
+					table_Err[7]=' ';
+				}
 				
 				lv_label_set_array_text(label_Err,&table_Err[0],8);
 			}
@@ -1699,7 +1714,7 @@ void fFactory_process(void)  //产测模式
 	
 	lv_obj_refresh_style(Src_fac);
 
-	if(Sys.Factorysteps>=1) //显示那一步
+	if(Sys.Errcode&ERR_HALL == 0) //自检状态下 并且霍尔正常的情况下
 	{
 		if(Pin_CheckPM25==0) // 每1毫秒检测一次
 		{
@@ -2627,7 +2642,7 @@ void fKey_GetValue(void)  //获取键值并处理
 void fFactory_getinto(void)
 {
 	Sys.Factorysteps = 0;
-	Sys.FactoryDelaycnt = 500;
+	Sys.FactoryDelaycnt = 2000;
 	Sys.Factoryflg = 1;  // 进入自检
 }
 
@@ -2671,7 +2686,7 @@ void fKey_Process(void) //T =6ms
 						{
 							if(Sys.Factorysteps<3)
 							{
-								Sys.FactoryDelaycnt = 500;
+								Sys.FactoryDelaycnt = 2000;
 								Sys.Factorysteps++;
 							}
 								
@@ -2680,7 +2695,7 @@ void fKey_Process(void) //T =6ms
 								if(Sys.Factorysteps==5)
 								{
 									Sys.Factorysteps = 6;
-									Sys.FactoryDelaycnt = 500;
+									Sys.FactoryDelaycnt = 1000;
 								}
 								
 							}	
@@ -2701,7 +2716,7 @@ void fKey_Process(void) //T =6ms
 						{
 							if(Sys.Factorysteps<3)
 							{
-								Sys.FactoryDelaycnt = 500;
+								Sys.FactoryDelaycnt = 2000;
 								Sys.Factorysteps++;
 							}
 								
@@ -2710,7 +2725,7 @@ void fKey_Process(void) //T =6ms
 								if(Sys.Factorysteps==6)
 								{
 									Sys.Factorysteps = 7;
-									Sys.FactoryDelaycnt = 500;
+									Sys.FactoryDelaycnt = 1000;
 								}
 								
 							}	
@@ -2731,7 +2746,7 @@ void fKey_Process(void) //T =6ms
 						{
 							if(Sys.Factorysteps<3)
 							{
-								Sys.FactoryDelaycnt = 500;
+								Sys.FactoryDelaycnt = 2000;
 								Sys.Factorysteps++;
 							}
 								
@@ -2740,7 +2755,7 @@ void fKey_Process(void) //T =6ms
 								if(Sys.Factorysteps==7)
 								{
 									Sys.Factorysteps = 8;
-									Sys.FactoryDelaycnt = 500;
+									Sys.FactoryDelaycnt = 1000;
 								}
 								
 							}	
@@ -2760,7 +2775,7 @@ void fKey_Process(void) //T =6ms
 						{
 							if(Sys.Factorysteps<3)
 							{
-								Sys.FactoryDelaycnt = 500;
+								Sys.FactoryDelaycnt = 2000;
 								Sys.Factorysteps++;
 							}
 								
@@ -2769,7 +2784,7 @@ void fKey_Process(void) //T =6ms
 								if(Sys.Factorysteps==8)
 								{
 									Sys.Factorysteps = 9;
-									Sys.FactoryDelaycnt = 500;
+									Sys.FactoryDelaycnt = 1000;
 								}
 								
 							}	
@@ -2793,7 +2808,7 @@ void fKey_Process(void) //T =6ms
 						{
 							if(Sys.Factorysteps<3)
 							{
-								Sys.FactoryDelaycnt = 500;
+								Sys.FactoryDelaycnt = 2000;
 								Sys.Factorysteps++;
 							}
 								
@@ -2802,7 +2817,7 @@ void fKey_Process(void) //T =6ms
 								if(Sys.Factorysteps==9)
 								{
 									Sys.Factorysteps = 10;
-									Sys.FactoryDelaycnt = 500;
+									Sys.FactoryDelaycnt = 1000;
 								}
 								
 							}	
@@ -2827,7 +2842,7 @@ void fKey_Process(void) //T =6ms
 						{
 							if(Sys.Factorysteps<3)
 							{
-								Sys.FactoryDelaycnt = 500;
+								Sys.FactoryDelaycnt = 2000;
 								Sys.Factorysteps++;
 							}
 								
@@ -3232,9 +3247,9 @@ void fBoard_Sensordatahandle(void)
 	{
 		Sys.comm.timeoutcnt = 0;
 		if(Sys.comm.rxdata[4]&bit5)
-			Sys.Errcode |=ERR_HUMI;
+			Sys.Errcode |=ERR_TEMP;
 		else
-			Sys.Errcode &=~ERR_HUMI;
+			Sys.Errcode &=~ERR_TEMP;
 
 		// if(Sys.comm.rxdata[4]&bit4)
 		// 	Sys.Errcode |=ERR_COMM;
@@ -3244,10 +3259,10 @@ void fBoard_Sensordatahandle(void)
 		else
 			Sys.Errcode &=~ERR_TVOC;
 
-		if(Sys.comm.rxdata[4]&bit3)
-			Sys.Errcode |=ERR_PM25;
-		else
-			Sys.Errcode &=~ERR_PM25;
+		// if(Sys.comm.rxdata[4]&bit3)
+		// 	Sys.Errcode |=ERR_PM25;
+		// else
+		// 	Sys.Errcode &=~ERR_PM25;
 
 		if(Sys.comm.rxdata[4]&bit0)
 			Sys.Errcode |=ERR_HALL;
@@ -4574,6 +4589,12 @@ void fFactory_ParticleGet(void)
 5.修复读取E方时候，第二地址永远不会读取正常的问题，因为checksum未清0
 6.风机在自检状态下故障判断从10S改为15S.
 7.PM25故障现在第一步就开始检测.
+
+2022.05.09
+1.日期改为0509
+2.修复自检下面霍尔断开错误的报PM25故障的问题.
+3.现在主控板和传感器板通讯里面不接受PM25故障.
+4.将ERR_HUMI改为ERR_TEMP 并且自检现在也会显示TEMPERR.
 */
 void hal_entry(void)
 {

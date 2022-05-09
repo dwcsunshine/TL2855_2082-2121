@@ -20,7 +20,7 @@
 extern volatile bool g_transfer_complete;
 
 #define FlashSize  0x100000    
-#define CompleteDate "Date:2022.05.06"
+#define CompleteDate "Date:2022.05.09"
 #define MainSoftVer "MainSoft Ver:1.0"
 #define MainPCBVer "MainPCB Ver:1.1"
 
@@ -61,7 +61,7 @@ typedef signed int  s32;
 #define ERR_COMM bit2 // 从机报的通讯故障
 #define ERR_PM25 bit3
 #define ERR_TVOC bit4
-#define ERR_HUMI bit5
+#define ERR_TEMP bit5
 #define ERR_COMM1 bit6 //主机报的通讯故障
 #define ERR_Filterlock bit7
 

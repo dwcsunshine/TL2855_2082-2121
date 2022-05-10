@@ -85,7 +85,7 @@
             (((RA_NOT_DEFINED > 0) ? 0U : 1U) << 27) /* SCI4 */ | \
             (((RA_NOT_DEFINED > 0) ? 0U : 1U) << 28) /* SCI3 */ | \
             (((1 > 0) ? 0U : 1U) << 29) /* SCI2 */ | \
-            (((1 > 0) ? 0U : 1U) << 30) /* SCI1 */ | \
+            (((RA_NOT_DEFINED > 0) ? 0U : 1U) << 30) /* SCI1 */ | \
             (((RA_NOT_DEFINED > 0) ? 0U : 1U) << 31) /* SCI0 */ | \
             0x33f4f9) /* Unused */
 #endif
@@ -118,7 +118,7 @@
 #endif
 #ifndef BSP_TZ_CFG_PSARE
 #define BSP_TZ_CFG_PSARE (\
-            (((RA_NOT_DEFINED > 0) ? 0U : 1U) << 0) /* WDT */ | \
+            (((1 > 0) ? 0U : 1U) << 0) /* WDT */ | \
             (((RA_NOT_DEFINED > 0) ? 0U : 1U) << 1) /* IWDT */ | \
             (((RA_NOT_DEFINED > 0) ? 0U : 1U) << 2) /* RTC */ | \
             (((RA_NOT_DEFINED > 0) ? 0U : 1U) << 14) /* AGT5 */ | \

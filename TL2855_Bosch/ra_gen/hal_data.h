@@ -4,6 +4,8 @@
 #include <stdint.h>
 #include "bsp_api.h"
 #include "common_data.h"
+#include "r_wdt.h"
+#include "r_wdt_api.h"
 #include "r_flash_hp.h"
 #include "r_flash_api.h"
 #include "r_gpt.h"
@@ -19,6 +21,16 @@
 #include "lv_conf.h"
 #include "hal_entry.h"
 FSP_HEADER
+/** WDT on WDT Instance. */
+extern const wdt_instance_t g_wdt0;
+
+/** Access the WDT instance using these structures when calling API functions directly (::p_api is not used). */
+extern wdt_instance_ctrl_t g_wdt0_ctrl;
+extern const wdt_cfg_t g_wdt0_cfg;
+
+#ifndef NULL
+void NULL(wdt_callback_args_t * p_args);
+#endif
 /* Flash on Flash HP Instance */
 extern const flash_instance_t g_flash0;
 
@@ -49,17 +61,6 @@ void NULL(timer_callback_args_t * p_args);
 
             #ifndef uart_sensor_callback
             void uart_sensor_callback(uart_callback_args_t * p_args);
-            #endif
-/** UART on SCI Instance. */
-            extern const uart_instance_t      g_uart1_wifi;
-
-            /** Access the UART instance using these structures when calling API functions directly (::p_api is not used). */
-            extern sci_uart_instance_ctrl_t     g_uart1_wifi_ctrl;
-            extern const uart_cfg_t g_uart1_wifi_cfg;
-            extern const sci_uart_extended_cfg_t g_uart1_wifi_cfg_extend;
-
-            #ifndef uart1_wifi_callback
-            void uart1_wifi_callback(uart_callback_args_t * p_args);
             #endif
 /** Timer on GPT Instance. */
 extern const timer_instance_t g_timer1;

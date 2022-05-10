@@ -1860,13 +1860,13 @@ void Normal_Display(void)  //正常显示
 		lv_obj_refresh_style (scr);
 	}
 	
-	if(Lvgl.cnt%10 == 0) //
+	if(Lvgl.cnt%20 == 0) //20220510 刷新时间缩短  原先为10MS
 	{
 		Main_screen_display();
 		Task_Moderefresh(Sys.opmode);
 
 		Task_Fanrefresh (Sys.Speed.gearreal);
-		if(Sys.comm.confirmcnt==0)
+		if(Sys.comm.confirmcnt==0)  //需要连续通讯数次 才能显示正常数值
 		{
 			Task_Temprefresh (Sys.Tempvalue);
 			Task_Humirefresh(Sys.Humivalue);
@@ -1874,8 +1874,8 @@ void Normal_Display(void)  //正常显示
 		else
 		{
 
-			lv_label_set_text(label_humi,"\xEE\x98\x87-\xEE\x98\x84");
-			lv_label_set_text(label_temperature,"\xEE\x98\x88-\xEE\x98\x82");
+			lv_label_set_text(label_humi,"\xEE\x98\x87-\xEE\x98\x84");  // 显示-%
+			lv_label_set_text(label_temperature,"\xEE\x98\x88-\xEE\x98\x82");//显示-℃
 		}
 		if(Sys.Warnup_Cnt<=320)  // 30S预热时间内显示
 		{
@@ -3867,6 +3867,7 @@ void Sys_start(void)
 	R_GPT_DutyCycleSet(&g_motor_pwm_ctrl,SPDOFF,GPT_IO_PIN_GTIOCA);
 	Sys.Initcomplete = 1; // 初始化完毕 可以执行任务了
 	Sys.powertmp = Sys.power; //先给开关状态赋值初值
+	R_WDT_Open(&g_wdt0_ctrl,&g_wdt0_cfg);  //开启WDT
 }
 void  Sys_Init(void) //系统初始化函数
 {
@@ -4581,6 +4582,13 @@ void fFactory_ParticleGet(void)
 1.日期改为20220510
 2.风机由于整机故障停止的时候也需要清除风机故障计数，防止误进入.
 3.经过曾伟的建议，现在霍尔开关放在最后一步检测，只有在没有错误，并且打开霍尔的情况下，才能正常关机.
+
+2022.05.10 0510 V2 版本
+1 优化一些IO口和外设，低功耗。关闭原先的SCI1就是wifi模块，将这两个口连同原先的QSPI口还有buzF口 全部设置成输出低，低功耗使用.
+2.增加了看门狗功能. 看门狗复位 大概2.68S，50Mhz，8192分频，16384计数.
+3.操作E方之前，先清除一下看门狗.
+
+
 */
 void hal_entry(void)
 {
@@ -4606,6 +4614,7 @@ void hal_entry(void)
 	
 	while(1)
 	{
+		R_WDT_Refresh(&g_wdt0_ctrl);
 		Lvgl.Taskcomplete = 0;
 		lv_task_handler(); // 任务处理器
 		Lvgl.Taskcomplete = 1;
@@ -4860,7 +4869,7 @@ fsp_err_t r_flash_hp_bgo_2855 ( u8 const blocks,uint32_t const src_address,uint3
 	fsp_err_t err = FSP_SUCCESS;
 	flash_result_t blank_check_result = FLASH_RESULT_BLANK;
 
-
+	R_WDT_Refresh(&g_wdt0_ctrl);
 	flash_address=FLASH_HP_DF_BLOCK_0+blocks*64;
 //	 err =R_FLASH_HP_StartUpAreaSelect (&g_flash0_ctrl, FLASH_STARTUP_AREA_BLOCK0, true);
 //

@@ -20,7 +20,7 @@
 extern volatile bool g_transfer_complete;
 
 #define FlashSize  0x100000    
-#define CompleteDate "Date:2022.05.09"
+#define CompleteDate "Date:2022.05.10"
 #define MainSoftVer "MainSoft Ver:1.0"
 #define MainPCBVer "MainPCB Ver:1.1"
 

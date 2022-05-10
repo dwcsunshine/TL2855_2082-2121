@@ -1484,7 +1484,7 @@ void fFactory_process(void)  //产测模式
 		lv_style_src_fac.body.grad_color = LV_COLOR_BLUE;
 		LED_RGB_BLUE_ON();
 		break;
-	case 3:
+	case 3:  //显示版本信息
 		/* code */
 	
 		if(Sys.FactoryDelaycnt == 2000)
@@ -1514,31 +1514,11 @@ void fFactory_process(void)  //产测模式
 
 			
 		}
-		if(Sys.FactoryDelaycnt == 0)
-		{
-			if(Sys.Errcode&ERR_HALL)
-			{
-				Sys.Factorysteps = 4;
-				Sys.FactoryDelaycnt = 1000;
-				lv_style_src_fac.text.opa = 0; //隐藏版本信息
-			}
-		}
-		
 		break;
-	case 4:
-		if(Sys.FactoryDelaycnt == 0)
-		{
-			if((Sys.Errcode&ERR_HALL)==0)
-			{
-				Sys.Factorysteps = 5;
-				Sys.FactoryDelaycnt = 1001;
-			}
-		}
-		break;
-	case 5:
+	case 4:  // 显示PM25等参数
 		/* code */
 		lv_style_src_fac.text.opa = 0; //隐藏版本信息
-		if(Sys.FactoryDelaycnt == 1000)
+		if(Sys.FactoryDelaycnt == 2000)
 		{
 			Task_Sensordatacreate();
 			Task_Humicreate();
@@ -1560,19 +1540,26 @@ void fFactory_process(void)  //产测模式
 	
 		
 		break;
+	case 5: 
+		LED_Key_auto_on();
+		break;
 	case 6:
+		/* code */
+		LED_Key_sleep_on();
 		LED_Key_auto_on();
 		break;
 	case 7:
 		/* code */
 		LED_Key_sleep_on();
 		LED_Key_auto_on();
+		LED_Key_speed_on();
 		break;
 	case 8:
 		/* code */
 		LED_Key_sleep_on();
 		LED_Key_auto_on();
 		LED_Key_speed_on();
+		LED_Key_filter_on();
 		break;
 	case 9:
 		/* code */
@@ -1580,29 +1567,22 @@ void fFactory_process(void)  //产测模式
 		LED_Key_auto_on();
 		LED_Key_speed_on();
 		LED_Key_filter_on();
-		break;
-	case 10:
-		/* code */
-		LED_Key_sleep_on();
-		LED_Key_auto_on();
-		LED_Key_speed_on();
-		LED_Key_filter_on();
 		LED_Key_power_on();
 		break;
-	case 11:
+	case 10:
 		/* code */
 		LED_key_all_on();
 		if(Sys.FactoryDelaycnt==0)
 		{
-			Sys.Factorysteps = 12;
-			Sys.FactoryDelaycnt = 2000;
+			Sys.Factorysteps = 11;
+			Sys.FactoryDelaycnt = 3000;
 		}
 			
 		break;
-	case 12:  // //退出自检的流程. 
+	case 11:  // //退出自检的流程. 
 		/* code */
 		LED_key_all_on();
-		if(Sys.Errcode == 0 && (Sys.FactoryDelaycnt==0))
+		if((Sys.Errcode==ERR_HALL) && (Sys.FactoryDelaycnt==0))
 		{
 			lv_obj_set_parent(label_pm25,scr);
 			lv_obj_set_parent(label_tvoc,scr);
@@ -1714,7 +1694,7 @@ void fFactory_process(void)  //产测模式
 	
 	lv_obj_refresh_style(Src_fac);
 
-	if(Sys.Errcode&ERR_HALL == 0) //自检状态下 并且霍尔正常的情况下
+	if((Sys.Errcode&ERR_HALL) == 0) //自检状态下 并且霍尔正常的情况下
 	{
 		if(Pin_CheckPM25==0) // 每1毫秒检测一次
 		{
@@ -2684,7 +2664,7 @@ void fKey_Process(void) //T =6ms
 						KeyStatus&=~KEY_ShortPress;
 						if(Sys.FactoryDelaycnt==0) //必须至少等待一段时间
 						{
-							if(Sys.Factorysteps<3)
+							if(Sys.Factorysteps<4)
 							{
 								Sys.FactoryDelaycnt = 2000;
 								Sys.Factorysteps++;
@@ -2692,9 +2672,9 @@ void fKey_Process(void) //T =6ms
 								
 							else
 							{
-								if(Sys.Factorysteps==5)
+								if(Sys.Factorysteps==4)
 								{
-									Sys.Factorysteps = 6;
+									Sys.Factorysteps = 5;
 									Sys.FactoryDelaycnt = 1000;
 								}
 								
@@ -2714,7 +2694,7 @@ void fKey_Process(void) //T =6ms
 						KeyStatus&=~KEY_ShortPress;
 						if(Sys.FactoryDelaycnt==0) //必须至少等待一段时间
 						{
-							if(Sys.Factorysteps<3)
+							if(Sys.Factorysteps<4)
 							{
 								Sys.FactoryDelaycnt = 2000;
 								Sys.Factorysteps++;
@@ -2722,9 +2702,9 @@ void fKey_Process(void) //T =6ms
 								
 							else
 							{
-								if(Sys.Factorysteps==6)
+								if(Sys.Factorysteps==5)
 								{
-									Sys.Factorysteps = 7;
+									Sys.Factorysteps = 6;
 									Sys.FactoryDelaycnt = 1000;
 								}
 								
@@ -2744,7 +2724,7 @@ void fKey_Process(void) //T =6ms
 						KeyStatus&=~KEY_ShortPress;
 						if(Sys.FactoryDelaycnt==0) //必须至少等待一段时间
 						{
-							if(Sys.Factorysteps<3)
+							if(Sys.Factorysteps<4)
 							{
 								Sys.FactoryDelaycnt = 2000;
 								Sys.Factorysteps++;
@@ -2752,9 +2732,9 @@ void fKey_Process(void) //T =6ms
 								
 							else
 							{
-								if(Sys.Factorysteps==7)
+								if(Sys.Factorysteps==6)
 								{
-									Sys.Factorysteps = 8;
+									Sys.Factorysteps = 7;
 									Sys.FactoryDelaycnt = 1000;
 								}
 								
@@ -2773,7 +2753,7 @@ void fKey_Process(void) //T =6ms
 						KeyStatus&=~KEY_ShortPress;
 						if(Sys.FactoryDelaycnt==0) //必须至少等待一段时间
 						{
-							if(Sys.Factorysteps<3)
+							if(Sys.Factorysteps<4)
 							{
 								Sys.FactoryDelaycnt = 2000;
 								Sys.Factorysteps++;
@@ -2781,9 +2761,9 @@ void fKey_Process(void) //T =6ms
 								
 							else
 							{
-								if(Sys.Factorysteps==8)
+								if(Sys.Factorysteps==7)
 								{
-									Sys.Factorysteps = 9;
+									Sys.Factorysteps = 8;
 									Sys.FactoryDelaycnt = 1000;
 								}
 								
@@ -2806,7 +2786,7 @@ void fKey_Process(void) //T =6ms
 						KeyStatus&=~KEY_ShortPress;
 						if(Sys.FactoryDelaycnt==0) //必须至少等待一段时间
 						{
-							if(Sys.Factorysteps<3)
+							if(Sys.Factorysteps<4)
 							{
 								Sys.FactoryDelaycnt = 2000;
 								Sys.Factorysteps++;
@@ -2814,9 +2794,9 @@ void fKey_Process(void) //T =6ms
 								
 							else
 							{
-								if(Sys.Factorysteps==9)
+								if(Sys.Factorysteps==8)
 								{
-									Sys.Factorysteps = 10;
+									Sys.Factorysteps = 9;
 									Sys.FactoryDelaycnt = 1000;
 								}
 								
@@ -2840,7 +2820,7 @@ void fKey_Process(void) //T =6ms
 						KeyStatus&=~KEY_ShortPress;
 						if(Sys.FactoryDelaycnt==0) //必须至少等待一段时间
 						{
-							if(Sys.Factorysteps<3)
+							if(Sys.Factorysteps<4)
 							{
 								Sys.FactoryDelaycnt = 2000;
 								Sys.Factorysteps++;
@@ -2848,9 +2828,9 @@ void fKey_Process(void) //T =6ms
 								
 							else
 							{
-								if(Sys.Factorysteps==10)
+								if(Sys.Factorysteps==9)
 								{
-									Sys.Factorysteps = 11;
+									Sys.Factorysteps = 10;
 									Sys.FactoryDelaycnt = 2000;
 								}
 								
@@ -3417,6 +3397,7 @@ void fMotor_ctrl(void)
 	{
 		PWR_MOTOR_DIS();
 		Motorpara.Spd_Output[0] = Motorpara.Spd_Off[0];
+		sErr_30s = 0;  // 风机停止的情况下计数清除 防止误判
 	}
 	else
 	{
@@ -4595,6 +4576,11 @@ void fFactory_ParticleGet(void)
 2.修复自检下面霍尔断开错误的报PM25故障的问题.
 3.现在主控板和传感器板通讯里面不接受PM25故障.
 4.将ERR_HUMI改为ERR_TEMP 并且自检现在也会显示TEMPERR.
+
+2022.05.10
+1.日期改为20220510
+2.风机由于整机故障停止的时候也需要清除风机故障计数，防止误进入.
+3.经过曾伟的建议，现在霍尔开关放在最后一步检测，只有在没有错误，并且打开霍尔的情况下，才能正常关机.
 */
 void hal_entry(void)
 {

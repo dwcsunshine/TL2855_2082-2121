@@ -964,11 +964,53 @@ void Filter_display(void)  //滤网寿命显示
 
 	}
 	
-	if(++Lvgl.Filtercnt>=10000)  // 2022.04.28 从3S改为10S
+	if(Sys.Filter.dispflg&&(Sys.Errcode&ERR_Filterlock))
+	{
+		if((Lvgl.Filtercnt<10000)&&(Lvgl.Filtercnt>0))
+			Lvgl.Filtercnt = 10000;  //这样的话 如果进入0%情况下会快速显示，然后取消这个显示可以立马清除.
+	}
+
+	if(++Lvgl.Filtercnt>=10010)  // 2022.04.28 从3S改为10S
 	{
 		if(Sys.Filter.dispflg&&(Sys.Errcode&ERR_Filterlock))
 		{
-			Lvgl.Filtercnt = 1;
+			Lvgl.Filtercnt = 10000;
+			lv_bar_set_value(bar1,Sys.Filter.percentage,LV_ANIM_OFF);
+			if(Sys.Filter.percentage==0)
+				Label_style_pic_filter.text.color = LV_COLOR_MAKE(0xff,0x21,0x24);  //红色#FF2124;
+			if(Sys.Filter.percentage>50) //绿色
+			{
+				memcpy(&table_filterpercent[0],"#5EBD82 ",8);
+			}
+			else if(Sys.Filter.percentage>20) //黄色
+			{
+				memcpy(&table_filterpercent[0],"#FFCF00 ",8);  //黄色#FFCF00
+			}
+			else
+			{
+				memcpy(&table_filterpercent[0],"#FF2124 ",8); //红色#FF2124
+			}
+			if(Sys.Filter.percentage==100)
+			{
+				table_filterpercent[8] = 0x30+1;
+				table_filterpercent[9] = 0x30+Sys.Filter.percentage%100/10;
+				table_filterpercent[10] = 0x30+Sys.Filter.percentage%10;
+				memcpy(&table_filterpercent[11],table_100percent,4); //
+				lv_label_set_array_text (obj_label_text_100percent, &table_filterpercent[0],15);
+			}
+			else if(Sys.Filter.percentage>=10) //修复10%不显示的bug
+			{
+				table_filterpercent[8] = 0x30+Sys.Filter.percentage/10;
+				table_filterpercent[9] = 0x30+Sys.Filter.percentage%10;
+				memcpy(&table_filterpercent[10],table_100percent,4); //
+				lv_label_set_array_text (obj_label_text_100percent, &table_filterpercent[0],14);
+			}
+			else
+			{
+				table_filterpercent[8] = 0x30+Sys.Filter.percentage%10;
+				memcpy(&table_filterpercent[9],table_100percent,4); //
+				lv_label_set_array_text (obj_label_text_100percent, &table_filterpercent[0],13);
+			}
 			return;
 		}
 		
@@ -1187,27 +1229,14 @@ void Filter_reset_animation(void)
 //---------------------------------------------滤网图标内部Indicate指示----------------------------------------//
 		lv_obj_set_size(bar1,14,60);
 		lv_bar_set_range(bar1,0,100);
-		lv_bar_set_value(bar1,Sys.Filter.percentage,LV_ANIM_OFF);
+		lv_bar_set_value(bar1,100,LV_ANIM_OFF);  // 复位滤网直接显示100，不进行计算了.
 		lv_bar_set_style(bar1,LV_BAR_STYLE_BG,&bar1_style_bg);
 		lv_bar_set_style(bar1,LV_BAR_STYLE_INDIC,&bar1_style_indic);
 
 		bar1_style_bg.body.main_color = LV_COLOR_BLACK;
 		bar1_style_bg.body.grad_color = LV_COLOR_BLACK;
-		if(Sys.Filter.percentage>50)
-		{
-			bar1_style_indic.body.main_color = LV_COLOR_MAKE(0x5e,0xbd,0x82); //绿色#5EBD82
-			bar1_style_indic.body.grad_color = LV_COLOR_MAKE(0x5e,0xbd,0x82); //绿色#5EBD82
-		}
-		else if(Sys.Filter.percentage>20)
-		{
-			bar1_style_indic.body.main_color = LV_COLOR_MAKE(0xff,0xCF,0x00); //黄色#FFCF00
-			bar1_style_indic.body.grad_color = LV_COLOR_MAKE(0xff,0xCF,0x00); //黄色#FFCF00
-		}
-		else
-		{
-			bar1_style_indic.body.main_color = LV_COLOR_MAKE(0xff,0x21,0x24);  //红色#FF2124
-			bar1_style_indic.body.grad_color = LV_COLOR_MAKE(0xff,0x21,0x24);  //红色#FF2124
-		}
+		bar1_style_indic.body.main_color = LV_COLOR_MAKE(0x5e,0xbd,0x82); //绿色#5EBD82  复位滤网直接显示绿色20220513
+		bar1_style_indic.body.grad_color = LV_COLOR_MAKE(0x5e,0xbd,0x82); //绿色#5EBD82
 		bar1_style_indic.body.radius = 0;
 		bar1_style_indic.body.padding.inner =0;
 		bar1_style_indic.body.padding.left = 0;
@@ -3202,6 +3231,8 @@ void fFilter_Cal(void) //滤网寿命计算
 	}
 	else
 		Sys.Errcode &=~ERR_Filterlock;
+	
+	Sys.Filter.percentage = 100-(Sys.Filter.accumulatedhour*100/Sys.Filter.maxhour);  //调换位置
 	if(Sys.Filter.dispflg&&(Sys.Errcode&ERR_Filterlock))
 	{
 		if((Lvgl.Curpfunction != Turn_On_Animation)&&(Lvgl.Curpfunction != Filter_display))
@@ -3212,7 +3243,6 @@ void fFilter_Cal(void) //滤网寿命计算
 			Lvgl.Curpfunction = Filter_display;
 		}
 	}
-	Sys.Filter.percentage = 100-(Sys.Filter.accumulatedhour*100/Sys.Filter.maxhour);
 }
 
 void fBoard_Sensordatahandle(void)
@@ -4588,6 +4618,11 @@ void fFactory_ParticleGet(void)
 2.增加了看门狗功能. 看门狗复位 大概2.68S，50Mhz，8192分频，16384计数.
 3.操作E方之前，先清除一下看门狗.
 
+
+2022.05.13
+1.日期改为20220513
+2.修复滤网时间到，清除滤网信息时候，中间百分比显示没有填充的问题.修复滤网显示只刷新一次的问题.
+3.出现0%提示界面之后，短按滤网按键会立马消失.
 
 */
 void hal_entry(void)

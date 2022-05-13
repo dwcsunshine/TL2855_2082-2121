@@ -102,6 +102,7 @@ uint8_t qe_getvalue(void)
 		err = RM_TOUCH_DataGet(g_qe_touch_instance_config01.p_ctrl, &button_status, NULL, NULL);
 		if (FSP_SUCCESS == err)
 		{
+			tmp1 = tmp2 = 0;
 			for(i=0; i<TOUCH_CFG_NUM_BUTTONS; i++)
 			{
 				tmp1+= g_touch_button_reference[i];
